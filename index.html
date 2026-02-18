@@ -1,0 +1,2321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>容器式电加热器设计软件 V2.5</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #f97316;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, white 0%, #f8fafc 100%);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .header-content {
+            max-width: 1500px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .logo {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, var(--secondary) 0%, #ea580c 100%);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 26px;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        }
+        .header h1 { font-size: 1.6rem; font-weight: 700; color: var(--gray-800); }
+        .header p { font-size: 0.9rem; color: var(--gray-500); }
+        .version-badge {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .main-container {
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 1.5rem;
+        }
+        @media (max-width: 1100px) {
+            .main-container { grid-template-columns: 1fr; }
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            overflow: hidden;
+            margin-bottom: 1rem;
+            border: 1px solid var(--gray-100);
+        }
+        .card-header {
+            padding: 1.1rem 1.4rem;
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #fafafa 0%, white 100%);
+        }
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--gray-700);
+        }
+        .card-title-en {
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--gray-400);
+            margin-left: 0.3rem;
+        }
+        .card-body { padding: 1.4rem; }
+        .form-group { margin-bottom: 1.1rem; }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+        }
+        .form-label-en {
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--gray-400);
+            margin-left: 0.3rem;
+        }
+        .form-input, .form-select {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            font-size: 0.9rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 10px;
+            background: white;
+            transition: all 0.2s;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+        .form-hint { font-size: 0.8rem; color: var(--gray-400); margin-top: 0.3rem; }
+        .form-optional { font-size: 0.75rem; color: var(--gray-400); margin-left: 0.5rem; }
+        .input-with-select {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .input-with-select .form-input {
+            flex: 1;
+        }
+        .input-with-select .form-select {
+            width: 100px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.85rem 1.6rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary { 
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); 
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4); }
+        .btn-primary:disabled { background: var(--gray-300); cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-secondary { 
+            background: linear-gradient(135deg, var(--gray-100) 0%, white 100%); 
+            color: var(--gray-700);
+            border: 1px solid var(--gray-200);
+        }
+        .btn-secondary:hover { background: var(--gray-100); }
+        .btn-success { 
+            background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%); 
+            color: white;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4); }
+        .btn-full { width: 100%; }
+        .btn-lg { padding: 1.1rem 2rem; font-size: 1.1rem; }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.85rem; }
+        .toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.3rem;
+            color: var(--gray-400);
+            font-size: 1rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+        @media (max-width: 800px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #fafbfc 0%, white 100%);
+            border-radius: 12px;
+            padding: 1.1rem;
+            text-align: center;
+            border: 1px solid var(--gray-100);
+        }
+        .stat-value { font-size: 1.6rem; font-weight: 700; }
+        .stat-value.orange { color: var(--secondary); }
+        .stat-value.blue { color: var(--primary); }
+        .stat-value.green { color: var(--success); }
+        .stat-value.purple { color: #8b5cf6; }
+        .stat-label { font-size: 0.85rem; color: var(--gray-500); margin-top: 0.3rem; }
+        .stat-label-en { font-size: 0.7rem; color: var(--gray-400); }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-200);
+            background: linear-gradient(135deg, #fafafa 0%, white 100%);
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-500);
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.2rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { color: var(--gray-700); background: var(--gray-50); }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background: white; }
+        .tab-btn-en { font-size: 0.7rem; font-weight: 400; color: var(--gray-400); }
+        .tab-content { display: none; padding: 1.4rem; }
+        .tab-content.active { display: block; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid var(--gray-100); }
+        .table th { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--gray-500); background: var(--gray-50); }
+        .table td { font-size: 0.9rem; }
+        .table tr:last-child td { border-bottom: none; }
+        .badge { display: inline-block; padding: 0.3rem 0.7rem; font-size: 0.8rem; font-weight: 500; border-radius: 9999px; }
+        .badge-primary { background: var(--primary); color: white; }
+        .badge-success { background: var(--success); color: white; }
+        .badge-outline { background: transparent; border: 1px solid var(--gray-300); color: var(--gray-600); }
+        .alert { padding: 1.1rem; border-radius: 10px; margin-bottom: 1rem; }
+        .alert-warning { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #fcd34d; color: #92400e; }
+        .alert-info { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 1px solid #93c5fd; color: #1e40af; }
+        .alert-success { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border: 1px solid #86efac; color: #166534; }
+        .alert-title { font-weight: 600; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.5rem; }
+        .empty-state { text-align: center; padding: 5rem 2rem; }
+        .empty-icon { width: 80px; height: 80px; background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-50) 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem; font-size: 2.5rem; color: var(--gray-400); }
+        .diagram-container { display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%); border-radius: 12px; padding: 1.2rem; min-height: 380px; border: 1px solid var(--gray-100); }
+        .recommendation-list { list-style: none; }
+        .recommendation-list li { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.6rem 0; font-size: 0.9rem; }
+        .recommendation-list .icon { color: var(--warning); flex-shrink: 0; margin-top: 2px; }
+        .footer {
+            background: linear-gradient(135deg, white 0%, #f8fafc 100%);
+            border-top: 1px solid var(--gray-200);
+            padding: 1.5rem 2rem;
+            margin-top: 2rem;
+        }
+        .footer-content {
+            max-width: 1500px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .footer-left { font-size: 0.85rem; color: var(--gray-500); }
+        .footer-right { font-size: 0.85rem; color: var(--gray-500); }
+        .footer-author { font-weight: 500; color: var(--gray-600); }
+        .footer-email { color: var(--primary); text-decoration: none; }
+        .footer-email:hover { text-decoration: underline; }
+        .spinner { width: 22px; height: 22px; border: 2px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        @media (max-width: 700px) { .two-col { grid-template-columns: 1fr; } }
+        .info-box { background: linear-gradient(135deg, var(--gray-50) 0%, white 100%); border-radius: 10px; padding: 1.1rem; border: 1px solid var(--gray-100); }
+        .info-box h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.6rem; color: var(--gray-700); }
+        .info-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.3rem 0; border-bottom: 1px dashed var(--gray-200); }
+        .info-row:last-child { border-bottom: none; }
+        .info-row .value { font-weight: 600; color: var(--gray-700); }
+        .highlight-box { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 1px solid #93c5fd; border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; }
+        .highlight-box h4 { color: #1e40af; font-weight: 600; margin-bottom: 0.5rem; }
+        .highlight-box p { color: #1e3a8a; font-size: 0.9rem; line-height: 1.6; }
+        .validation-box { background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%); border: 1px solid #86efac; border-radius: 10px; padding: 1.1rem; margin-bottom: 1rem; }
+        .validation-box h4 { color: #166534; font-weight: 600; margin-bottom: 0.5rem; }
+        .validation-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #166534; margin: 0.3rem 0; }
+        .validation-item .check { color: var(--success); font-weight: bold; }
+        .validation-item .fail { color: var(--danger); font-weight: bold; }
+        .section-title { font-size: 0.9rem; font-weight: 600; color: var(--gray-700); margin: 1.5rem 0 0.8rem 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--gray-200); }
+        .section-title-en { font-size: 0.75rem; font-weight: 400; color: var(--gray-400); margin-left: 0.3rem; }
+        .pressure-badge { display: inline-block; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #fcd34d; color: #92400e; padding: 0.25rem 0.75rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; }
+        .class-badge { display: inline-block; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 1px solid #93c5fd; color: #1e40af; padding: 0.25rem 0.75rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; }
+        .ld-good { color: var(--success); }
+        .ld-warning { color: var(--warning); }
+        .formula-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.8rem; margin: 0.5rem 0; font-family: monospace; font-size: 0.85rem; color: #475569; }
+        
+        .diameter-selector {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #fcd34d;
+            border-radius: 12px;
+            padding: 1rem 1.4rem;
+            margin-bottom: 1rem;
+        }
+        .diameter-selector-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .diameter-options {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .diameter-btn {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: 2px solid #fcd34d;
+            border-radius: 8px;
+            background: white;
+            color: #92400e;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .diameter-btn:hover {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+        .diameter-btn.active {
+            background: #f59e0b;
+            border-color: #f59e0b;
+            color: white;
+        }
+        .diameter-btn.invalid {
+            opacity: 0.5;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
+        .diameter-btn.invalid:hover {
+            background: white;
+            border-color: #fcd34d;
+        }
+        
+        .baffle-selector {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            border: 1px solid #86efac;
+            border-radius: 12px;
+            padding: 1rem 1.4rem;
+            margin-bottom: 1rem;
+        }
+        .baffle-selector-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #166534;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .baffle-options {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .baffle-btn {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: 2px solid #86efac;
+            border-radius: 8px;
+            background: white;
+            color: #166534;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .baffle-btn:hover {
+            background: #dcfce7;
+            border-color: #22c55e;
+        }
+        .baffle-btn.active {
+            background: #22c55e;
+            border-color: #22c55e;
+            color: white;
+        }
+        
+        .material-category {
+            margin-bottom: 1.5rem;
+        }
+        .material-category:last-child {
+            margin-bottom: 0;
+        }
+        .material-category-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0.8rem;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: 6px;
+            border-left: 3px solid var(--primary);
+        }
+        .material-category-title-en {
+            font-size: 0.8rem;
+            font-weight: 400;
+            color: var(--gray-400);
+            margin-left: 0.5rem;
+        }
+        
+        .pressure-drop-result {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 1px solid #fcd34d;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .pressure-drop-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #92400e;
+        }
+        .pressure-drop-unit {
+            font-size: 1rem;
+            color: #b45309;
+        }
+        .pressure-drop-label {
+            font-size: 0.9rem;
+            color: #92400e;
+            margin-top: 0.3rem;
+        }
+        
+        .not-required {
+            color: var(--gray-400);
+            font-style: italic;
+        }
+        
+        .nozzle-select {
+            padding: 0.4rem 0.6rem;
+            font-size: 0.85rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            min-width: 80px;
+        }
+        .nozzle-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .recommended-value {
+            color: var(--gray-500);
+            font-size: 0.85rem;
+        }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .modal-header {
+            padding: 1.2rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #fafafa 0%, white 100%);
+        }
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-400);
+            padding: 0.5rem;
+            line-height: 1;
+        }
+        .modal-close:hover {
+            color: var(--gray-600);
+        }
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.8rem;
+            background: var(--gray-50);
+        }
+        
+        .calc-report {
+            font-family: 'Times New Roman', Times, serif;
+            color: #000;
+            line-height: 1.8;
+        }
+        .calc-report-title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #000;
+        }
+        .calc-report-section {
+            margin-bottom: 1.5rem;
+        }
+        .calc-report-section-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 0.8rem;
+            padding: 0.3rem 0.5rem;
+            background: #f0f0f0;
+            border-left: 3px solid var(--primary);
+        }
+        .calc-report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0.8rem 0;
+        }
+        .calc-report-table th,
+        .calc-report-table td {
+            border: 1px solid #333;
+            padding: 0.5rem 0.8rem;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+        .calc-report-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+            text-align: center;
+        }
+        .calc-report-formula {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+        }
+        .calc-report-result {
+            background: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            padding: 0.5rem 1rem;
+            margin: 0.5rem 0;
+            font-weight: bold;
+        }
+        .calc-report-note {
+            font-size: 0.85rem;
+            color: #666;
+            margin: 0.5rem 0;
+            padding-left: 1rem;
+            border-left: 2px solid #ccc;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        @media print {
+            .modal-overlay { display: none !important; }
+            body * { visibility: hidden; }
+            .print-content, .print-content * { visibility: visible; }
+            .print-content {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20mm;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">🔥</div>
+            <div>
+                <h1>容器式电加热器设计软件</h1>
+                <p>Electric Heater Exchanger Design Tool - Professional</p>
+            </div>
+            <span class="version-badge">V2.5</span>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div class="left-panel">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">⚡ 基本参数 <span class="card-title-en">Basic Parameters</span></div>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">电压 <span class="form-label-en">Voltage</span> (V)</label>
+                        <select class="form-select" id="voltage">
+                            <option value="220">220V (单相 / 1-Phase)</option>
+                            <option value="380" selected>380V (三相 / 3-Phase)</option>
+                            <option value="400">400V (三相 / 3-Phase)</option>
+                            <option value="415">415V (三相 / 3-Phase)</option>
+                            <option value="440">440V (三相 / 3-Phase)</option>
+                            <option value="600">600V (三相 / 3-Phase)</option>
+                            <option value="660">660V (三相 / 3-Phase)</option>
+                            <option value="690">690V (三相 / 3-Phase)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">功率 <span class="form-label-en">Power</span> (kW)</label>
+                        <input type="number" class="form-input" id="power" value="60" min="1" max="3000" step="1">
+                        <p class="form-hint">范围 Range: 1-3000 kW</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">⚙️ 高级参数 <span class="card-title-en">Advanced Parameters</span></div>
+                    <button class="toggle-btn" id="toggleAdvanced" onclick="toggleAdvanced()">
+                        <span id="toggleIcon">▼</span>
+                    </button>
+                </div>
+                <div class="card-body" id="advancedParams" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">设计压力 <span class="form-label-en">Design Pressure</span> (Barg)</label>
+                        <input type="number" class="form-input" id="pressure" value="6" min="0.1" max="350" step="0.1">
+                        <p class="form-hint">表压 Gauge Pressure</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">工作温度 <span class="form-label-en">Operating Temperature</span> (℃)</label>
+                        <input type="number" class="form-input" id="temperature" value="200" min="-196" max="700" step="10">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">加热介质 <span class="form-label-en">Heating Medium</span></label>
+                        <select class="form-select" id="medium">
+                            <option value="水" selected>水 / Water</option>
+                            <option value="导热油">导热油 / Thermal Oil</option>
+                            <option value="蒸汽">蒸汽 / Steam</option>
+                            <option value="空气">空气 / Air</option>
+                            <option value="氮气">氮气 / Nitrogen</option>
+                            <option value="氢气">氢气 / Hydrogen</option>
+                            <option value="二氧化碳">二氧化碳 / CO2</option>
+                            <option value="天然气">天然气 / Natural Gas</option>
+                            <option value="腐蚀性介质">腐蚀性介质 / Corrosive Medium</option>
+                            <option value="酸碱溶液">酸碱溶液 / Acid/Alkali Solution</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">安装方式 <span class="form-label-en">Installation Type</span></label>
+                        <select class="form-select" id="installationType">
+                            <option value="horizontal" selected>卧式 / Horizontal</option>
+                            <option value="vertical">立式 / Vertical</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">压力容器标准 <span class="form-label-en">Pressure Vessel Standard</span></label>
+                        <select class="form-select" id="standard">
+                            <option value="GB150" selected>GB150 (中国国标 / China)</option>
+                            <option value="ASME">ASME (美国标准 / USA)</option>
+                            <option value="ASME+U">ASME+U (U钢印认证 / U Stamp)</option>
+                            <option value="ASME+U+NB">ASME+U+NB (U钢印+NB认证 / U+NB)</option>
+                            <option value="PED">PED (欧盟承压设备指令 / EU)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">容器材料 <span class="form-label-en">Vessel Material</span></label>
+                        <select class="form-select" id="materialType">
+                            <option value="carbonSteel" selected>碳钢 / Carbon Steel</option>
+                            <option value="stainlessSteel">不锈钢 / Stainless Steel</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed var(--gray-200);">
+                        <p style="font-size: 0.85rem; color: var(--gray-500); margin-bottom: 1rem;">
+                            📊 压力降计算参数 <span class="form-optional">(可选 / Optional)</span>
+                        </p>
+                        <div class="form-group">
+                            <label class="form-label">介质流量 <span class="form-label-en">Flow Rate</span></label>
+                            <div class="input-with-select">
+                                <input type="number" class="form-input" id="flowRate" placeholder="如需计算压力降请填写" min="0.1" max="100000" step="0.1">
+                                <select class="form-select" id="flowRateUnit">
+                                    <option value="m3h">m³/h</option>
+                                    <option value="kgh">kg/h</option>
+                                </select>
+                            </div>
+                            <p class="form-hint">体积流量或质量流量，用于压力降计算</p>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">工作压力 <span class="form-label-en">Operating Pressure</span> (Barg)</label>
+                            <input type="number" class="form-input" id="operatingPressure" placeholder="气体介质需填写" min="0" max="350" step="0.1">
+                            <p class="form-hint">气体介质计算密度时需要，液体可留空</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary btn-full btn-lg" id="calculateBtn" onclick="calculate()">
+                <span id="btnIcon">🧮</span>
+                <span id="btnText">开始设计计算 / Calculate</span>
+            </button>
+
+            <div class="alert alert-warning" id="errorAlert" style="display: none; margin-top: 1rem;">
+                <div class="alert-title">⚠️ 错误 / Error</div>
+                <div id="errorMessage"></div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="card" id="resultsCard">
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon">📄</div>
+                    <h3 class="empty-title">开始设计您的电加热器</h3>
+                    <p class="empty-description">Start Designing Your Electric Heater</p>
+                    <p class="empty-description" style="margin-top: 0.5rem;">
+                        输入电压和功率参数，点击"开始设计计算"按钮。<br>
+                        Enter voltage and power parameters, then click "Calculate" button.
+                    </p>
+                </div>
+
+                <div id="resultsContent" style="display: none;">
+                    <div class="diameter-selector" id="diameterSelector">
+                        <div class="diameter-selector-title">
+                            📏 容器直径调整 / Vessel Diameter Adjustment
+                            <span style="font-weight:400;font-size:0.8rem;margin-left:auto;">点击选择不同直径查看方案变化</span>
+                        </div>
+                        <div class="diameter-options" id="diameterOptions"></div>
+                    </div>
+
+                    <div class="card-body" style="border-bottom: 1px solid var(--gray-100);">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value orange" id="statTubes">-</div>
+                                <div class="stat-label">加热管数量</div>
+                                <div class="stat-label-en">Heating Elements</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value blue" id="statDn">-</div>
+                                <div class="stat-label">容器直径</div>
+                                <div class="stat-label-en">Vessel Diameter</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value green" id="statLength">-</div>
+                                <div class="stat-label">容器长度</div>
+                                <div class="stat-label-en">Vessel Length (mm)</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value purple" id="statPn">-</div>
+                                <div class="stat-label">压力等级</div>
+                                <div class="stat-label-en">Pressure Class</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tabs">
+                        <button class="tab-btn active" onclick="switchTab('dimensions')">
+                            <span>📏 容器</span>
+                            <span class="tab-btn-en">Vessel</span>
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('tubes')">
+                            <span>⚡ 加热管</span>
+                            <span class="tab-btn-en">Heating Element</span>
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('materials')">
+                            <span>📦 材料</span>
+                            <span class="tab-btn-en">Materials</span>
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('electrical')">
+                            <span>🔌 电气</span>
+                            <span class="tab-btn-en">Electrical</span>
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('pressureDrop')">
+                            <span>💧 压力降</span>
+                            <span class="tab-btn-en">Pressure Drop</span>
+                        </button>
+                    </div>
+
+                    <div class="tab-content active" id="tab-dimensions">
+                        <div class="two-col">
+                            <div>
+                                <h4 class="section-title">容器主体 <span class="section-title-en">Vessel Body</span></h4>
+                                <table class="table">
+                                    <thead><tr><th>参数 Parameter</th><th>数值 Value</th><th>单位 Unit</th></tr></thead>
+                                    <tbody id="dimensionsTable"></tbody>
+                                </table>
+
+                                <h4 class="section-title">管口尺寸 <span class="section-title-en">Nozzle Sizes</span></h4>
+                                <table class="table">
+                                    <thead><tr><th>位置 Location</th><th>建议规格 Recommended</th><th>实际规格 Actual</th><th>外径 OD</th><th>压力等级 Class</th></tr></thead>
+                                    <tbody id="nozzlesTable"></tbody>
+                                </table>
+                            </div>
+                            <div class="diagram-container" id="vesselDiagram"></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tab-tubes">
+                        <div class="highlight-box">
+                            <h4>📐 U形管尺寸计算说明 <span style="font-weight:400;font-size:0.8rem;">U-Tube Dimension Calculation</span></h4>
+                            <p id="tubeDescription"></p>
+                            <div class="formula-box" id="formulaBox"></div>
+                        </div>
+                        <div class="two-col">
+                            <div>
+                                <h4 class="section-title">加热管参数 <span class="section-title-en">Heating Element Parameters</span></h4>
+                                <table class="table">
+                                    <thead><tr><th>参数 Parameter</th><th>数值 Value</th><th>单位 Unit</th></tr></thead>
+                                    <tbody id="tubesTable"></tbody>
+                                </table>
+
+                                <h4 class="section-title">表面负荷参数 <span class="section-title-en">Surface Load Parameters</span></h4>
+                                <table class="table">
+                                    <thead><tr><th>参数 Parameter</th><th>数值 Value</th><th>单位 Unit</th></tr></thead>
+                                    <tbody id="surfaceLoadTable"></tbody>
+                                </table>
+                            </div>
+                            <div class="diagram-container" id="tubeDiagram"></div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tab-materials">
+                        <p style="font-size: 0.9rem; color: var(--gray-500); margin-bottom: 1rem;" id="materialsSubtitle"></p>
+                        <div id="materialsContent"></div>
+                    </div>
+
+                    <div class="tab-content" id="tab-electrical">
+                        <div class="two-col">
+                            <div>
+                                <table class="table">
+                                    <thead><tr><th>参数 Parameter</th><th>数值 Value</th><th>单位 Unit</th></tr></thead>
+                                    <tbody id="electricalTable"></tbody>
+                                </table>
+                            </div>
+                            <div>
+                                <div class="info-box">
+                                    <h4>经济性指标 <span style="font-weight:400;font-size:0.8rem;">Economic Indicators</span></h4>
+                                    <div id="economicsInfo"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tab-pressureDrop">
+                        <div id="pressureDropContent"></div>
+                    </div>
+
+                    <div class="card-body" style="border-top: 1px solid var(--gray-100);">
+                        <div class="validation-box" id="validationBox">
+                            <h4>✅ 设计验证 <span style="font-weight:400;font-size:0.8rem;">Design Validation</span></h4>
+                            <div id="validationList"></div>
+                        </div>
+                        <div class="alert alert-info" id="recommendationsAlert">
+                            <div class="alert-title">💡 设计建议 <span style="font-weight:400;font-size:0.8rem;">Design Recommendations</span></div>
+                            <ul class="recommendation-list" id="recommendationsList"></ul>
+                        </div>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-success btn-full" onclick="generateCalcReport()">
+                                <span>📄</span>
+                                <span>生成计算书 / Generate Calculation Report</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="reportModalTitle">压力容器设计计算书</div>
+                <button class="modal-close" onclick="closeReportModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="reportModalBody">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeReportModal()">关闭 / Close</button>
+                <button class="btn btn-primary" onclick="printReport()">🖨️ 打印 / Print</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-left">
+                <span>容器式电加热器设计软件 V2.5</span>
+                <span style="margin-left: 1rem;">支持标准 Standards: GB150 | ASME | ASME+U | ASME+U+NB | PED</span>
+            </div>
+            <div class="footer-right">
+                <span class="footer-author">Author: OliverChow</span>
+                <span style="margin-left: 0.5rem;">|</span>
+                <span style="margin-left: 0.5rem;">Email: <a href="mailto:zhougw@gmail.com" class="footer-email">zhougw@gmail.com</a></span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ==================== 材料数据库 ====================
+        const MATERIAL_DATABASE = {
+            GB150: {
+                carbonSteel: {
+                    flange: [
+                        { grade: "Q235B", description: "碳素结构钢，适用于低压法兰", tempRange: "-20~350℃", yieldStrength: 235 },
+                        { grade: "20#", description: "优质碳素结构钢，锻件", tempRange: "-20~425℃", yieldStrength: 245 },
+                        { grade: "16Mn", description: "低合金钢，高强度法兰", tempRange: "-40~450℃", yieldStrength: 345 },
+                    ],
+                    shell: [
+                        { grade: "Q235B", description: "碳素结构钢，适用于低压容器", tempRange: "-20~350℃", yieldStrength: 235 },
+                        { grade: "Q245R", description: "压力容器用碳素钢", tempRange: "-20~475℃", yieldStrength: 245 },
+                        { grade: "Q345R", description: "低合金高强度钢", tempRange: "-20~500℃", yieldStrength: 345 },
+                    ],
+                    head: [
+                        { grade: "Q235B", description: "碳素结构钢，椭圆形封头", tempRange: "-20~350℃", yieldStrength: 235 },
+                        { grade: "Q245R", description: "压力容器用碳素钢封头", tempRange: "-20~475℃", yieldStrength: 245 },
+                        { grade: "Q345R", description: "低合金高强度钢封头", tempRange: "-20~500℃", yieldStrength: 345 },
+                    ],
+                    nozzle: [
+                        { grade: "20#", description: "优质碳素结构钢无缝管", tempRange: "-20~425℃", yieldStrength: 245 },
+                        { grade: "Q235B", description: "碳素结构钢管", tempRange: "-20~350℃", yieldStrength: 235 },
+                        { grade: "16Mn", description: "低合金钢无缝管", tempRange: "-40~450℃", yieldStrength: 345 },
+                    ]
+                },
+                stainlessSteel: {
+                    flange: [
+                        { grade: "06Cr19Ni10 (304)", description: "奥氏体不锈钢锻件", tempRange: "-196~700℃", yieldStrength: 205 },
+                        { grade: "06Cr17Ni12Mo2 (316)", description: "含钼奥氏体不锈钢锻件", tempRange: "-196~700℃", yieldStrength: 205 },
+                    ],
+                    shell: [
+                        { grade: "S30408 (06Cr19Ni10)", description: "奥氏体不锈钢，通用型", tempRange: "-196~700℃", yieldStrength: 205 },
+                        { grade: "S31608 (06Cr17Ni12Mo2)", description: "含钼奥氏体不锈钢，耐腐蚀", tempRange: "-196~700℃", yieldStrength: 205 },
+                    ],
+                    head: [
+                        { grade: "S30408 (06Cr19Ni10)", description: "奥氏体不锈钢封头", tempRange: "-196~700℃", yieldStrength: 205 },
+                        { grade: "S31608 (06Cr17Ni12Mo2)", description: "含钼奥氏体不锈钢封头", tempRange: "-196~700℃", yieldStrength: 205 },
+                    ],
+                    nozzle: [
+                        { grade: "06Cr19Ni10 (304)", description: "奥氏体不锈钢无缝管", tempRange: "-196~700℃", yieldStrength: 205 },
+                        { grade: "06Cr17Ni12Mo2 (316)", description: "含钼奥氏体不锈钢无缝管", tempRange: "-196~700℃", yieldStrength: 205 },
+                    ]
+                },
+            },
+            ASME: {
+                carbonSteel: {
+                    flange: [
+                        { grade: "SA-105", description: "Carbon steel forging for flanges", tempRange: "-20~538℃", yieldStrength: 250 },
+                        { grade: "SA-350 LF2", description: "Carbon steel forging for low temp", tempRange: "-50~538℃", yieldStrength: 250 },
+                    ],
+                    shell: [
+                        { grade: "SA-516 Gr.60", description: "Carbon steel plate for pressure vessels", tempRange: "-50~538℃", yieldStrength: 220 },
+                        { grade: "SA-516 Gr.70", description: "Carbon steel plate for pressure vessels", tempRange: "-50~538℃", yieldStrength: 260 },
+                    ],
+                    head: [
+                        { grade: "SA-516 Gr.60", description: "Carbon steel plate for heads", tempRange: "-50~538℃", yieldStrength: 220 },
+                        { grade: "SA-516 Gr.70", description: "Carbon steel plate for heads", tempRange: "-50~538℃", yieldStrength: 260 },
+                    ],
+                    nozzle: [
+                        { grade: "SA-106 Gr.B", description: "Seamless carbon steel pipe", tempRange: "-20~538℃", yieldStrength: 240 },
+                        { grade: "SA-333 Gr.6", description: "Seamless carbon steel pipe for low temp", tempRange: "-50~538℃", yieldStrength: 240 },
+                    ]
+                },
+                stainlessSteel: {
+                    flange: [
+                        { grade: "SA-182 F304", description: "Austenitic stainless steel forging", tempRange: "-254~816℃", yieldStrength: 205 },
+                        { grade: "SA-182 F316L", description: "Low carbon austenitic stainless steel forging", tempRange: "-254~454℃", yieldStrength: 170 },
+                    ],
+                    shell: [
+                        { grade: "SA-240 304", description: "Austenitic stainless steel plate", tempRange: "-254~816℃", yieldStrength: 205 },
+                        { grade: "SA-240 316L", description: "Low carbon austenitic stainless steel plate", tempRange: "-254~454℃", yieldStrength: 170 },
+                    ],
+                    head: [
+                        { grade: "SA-240 304", description: "Austenitic stainless steel plate for heads", tempRange: "-254~816℃", yieldStrength: 205 },
+                        { grade: "SA-240 316L", description: "Low carbon austenitic stainless steel plate for heads", tempRange: "-254~454℃", yieldStrength: 170 },
+                    ],
+                    nozzle: [
+                        { grade: "SA-312 TP304", description: "Austenitic stainless steel seamless pipe", tempRange: "-254~816℃", yieldStrength: 205 },
+                        { grade: "SA-312 TP316L", description: "Low carbon austenitic stainless steel seamless pipe", tempRange: "-254~454℃", yieldStrength: 170 },
+                    ]
+                },
+            },
+            "ASME+U": {
+                carbonSteel: {
+                    flange: [
+                        { grade: "SA-105 (U Stamp)", description: "U Stamp certified carbon steel forging", tempRange: "-20~538℃", yieldStrength: 250 },
+                        { grade: "SA-350 LF2 (U Stamp)", description: "U Stamp certified carbon steel forging for low temp", tempRange: "-50~538℃", yieldStrength: 250 },
+                    ],
+                    shell: [
+                        { grade: "SA-516 Gr.60 (U Stamp)", description: "U Stamp certified carbon steel plate", tempRange: "-50~538℃", yieldStrength: 220 },
+                        { grade: "SA-516 Gr.70 (U Stamp)", description: "U Stamp certified carbon steel plate", tempRange: "-50~538℃", yieldStrength: 260 },
+                    ],
+                    head: [
+                        { grade: "SA-516 Gr.60 (U Stamp)", description: "U Stamp certified carbon steel plate for heads", tempRange: "-50~538℃", yieldStrength: 220 },
+                        { grade: "SA-516 Gr.70 (U Stamp)", description: "U Stamp certified carbon steel plate for heads", tempRange: "-50~538℃", yieldStrength: 260 },
+                    ],
+                    nozzle: [
+                        { grade: "SA-106 Gr.B (U Stamp)", description: "U Stamp certified carbon steel pipe", tempRange: "-20~538℃", yieldStrength: 240 },
+                        { grade: "SA-333 Gr.6 (U Stamp)", description: "U Stamp certified carbon steel pipe for low temp", tempRange: "-50~538℃", yieldStrength: 240 },
+                    ]
+                },
+                stainlessSteel: {
+                    flange: [
+                        { grade: "SA-182 F304 (U Stamp)", description: "U Stamp certified stainless steel forging", tempRange: "-254~816℃", yieldStrength: 205 },
+                        { grade: "SA-182 F316L (U Stamp)", description: "U Stamp certified stainless steel forging", tempRange: "-254~454℃", yieldStrength: 170 },
+                    ],
+                    shell: [
+                        { grade: "SA-240 304 (U Stamp)", description: "U Stamp certified stainless steel plate", tempRange: "-254~816℃", yieldStrength: 205 },
+                        { grade: "SA-240 316L (U Stamp)", description: "U Stamp certified stainless steel plate", tempRange: "-254~454℃", yieldStrength: 170 },
+                    ],
+                    head: [
+                        { grade: "SA-240 304 (U Stamp)", description: "U Stamp certified stainless steel plate for heads", tempRange: "-254~816℃", yieldStrength: 205 },
+                        { grade: "SA-240 316L (U Stamp)", description: "U Stamp certified stainless steel plate for heads", tempRange: "-254~454℃", yieldStrength: 170 },
+                    ],
+                    nozzle: [
+                        { grade: "SA-312 TP304 (U Stamp)", description: "U Stamp certified stainless steel pipe", tempRange: "-254~816℃", yieldStrength: 205 },
+                        { grade: "SA-312 TP316L (U Stamp)", description: "U Stamp certified stainless steel pipe", tempRange: "-254~454℃", yieldStrength: 170 },
+                    ]
+                },
+            },
+            "ASME+U+NB": {
+                carbonSteel: {
+                    flange: [
+                        { grade: "SA-105 (U+NB)", description: "U+NB certified carbon steel forging", tempRange: "-20~538℃", yieldStrength: 250 },
+                        { grade: "SA-350 LF2 (U+NB)", description: "U+NB certified carbon steel forging for low temp", tempRange: "-50~538℃", yieldStrength: 250 },
+                    ],
+                    shell: [
+                        { grade: "SA-516 Gr.60 (U+NB)", description: "U+NB certified carbon steel plate", tempRange: "-50~538℃", yieldStrength: 220 },
+                        { grade: "SA-516 Gr.70 (U+NB)", description: "U+NB certified carbon steel plate", tempRange: "-50~538℃", yieldStrength: 260 },
+                    ],
+                    head: [
+                        { grade: "SA-516 Gr.60 (U+NB)", description: "U+NB certified carbon steel plate for heads", tempRange: "-50~538℃", yieldStrength: 220 },
+                        { grade: "SA-516 Gr.70 (U+NB)", description: "U+NB certified carbon steel plate for heads", tempRange: "-50~538℃", yieldStrength: 260 },
+                    ],
+                    nozzle: [
+                        { grade: "SA-106 Gr.B (U+NB)", description: "U+NB certified carbon steel pipe", tempRange: "-20~538℃", yieldStrength: 240 },
+                        { grade: "SA-333 Gr.6 (U+NB)", description: "U+NB certified carbon steel pipe for low temp", tempRange: "-50~538℃", yieldStrength: 240 },
+                    ]
+                },
+                stainlessSteel: {
+                    flange: [
+                        { grade: "SA-182 F304 (U+NB)", description: "U+NB certified stainless steel forging", tempRange: "-254~816℃", yieldStrength: 205 },
+                        { grade: "SA-182 F316L (U+NB)", description: "U+NB certified stainless steel forging", tempRange: "-254~454℃", yieldStrength: 170 },
+                    ],
+                    shell: [
+                        { grade: "SA-240 304 (U+NB)", description: "U+NB certified stainless steel plate", tempRange: "-254~816℃", yieldStrength: 205 },
+                        { grade: "SA-240 316L (U+NB)", description: "U+NB certified stainless steel plate", tempRange: "-254~454℃", yieldStrength: 170 },
+                    ],
+                    head: [
+                        { grade: "SA-240 304 (U+NB)", description: "U+NB certified stainless steel plate for heads", tempRange: "-254~816℃", yieldStrength: 205 },
+                        { grade: "SA-240 316L (U+NB)", description: "U+NB certified stainless steel plate for heads", tempRange: "-254~454℃", yieldStrength: 170 },
+                    ],
+                    nozzle: [
+                        { grade: "SA-312 TP304 (U+NB)", description: "U+NB certified stainless steel pipe", tempRange: "-254~816℃", yieldStrength: 205 },
+                        { grade: "SA-312 TP316L (U+NB)", description: "U+NB certified stainless steel pipe", tempRange: "-254~454℃", yieldStrength: 170 },
+                    ]
+                },
+            },
+            PED: {
+                carbonSteel: {
+                    flange: [
+                        { grade: "P245GH", description: "Non-alloy steel forging for pressure purposes", tempRange: "-20~475℃", yieldStrength: 245 },
+                        { grade: "P355GH", description: "Alloy steel forging for pressure purposes", tempRange: "-20~475℃", yieldStrength: 355 },
+                    ],
+                    shell: [
+                        { grade: "P265GH", description: "Non-alloy steel for pressure purposes", tempRange: "-20~475℃", yieldStrength: 265 },
+                        { grade: "P355GH", description: "Alloy steel for pressure purposes", tempRange: "-20~475℃", yieldStrength: 355 },
+                    ],
+                    head: [
+                        { grade: "P265GH", description: "Non-alloy steel for pressure heads", tempRange: "-20~475℃", yieldStrength: 265 },
+                        { grade: "P355GH", description: "Alloy steel for pressure heads", tempRange: "-20~475℃", yieldStrength: 355 },
+                    ],
+                    nozzle: [
+                        { grade: "P235GH", description: "Non-alloy steel pipe for pressure purposes", tempRange: "-20~475℃", yieldStrength: 235 },
+                        { grade: "P265GH", description: "Non-alloy steel pipe for pressure purposes", tempRange: "-20~475℃", yieldStrength: 265 },
+                    ]
+                },
+                stainlessSteel: {
+                    flange: [
+                        { grade: "1.4301 (X5CrNi18-10)", description: "Austenitic stainless steel forging", tempRange: "-196~550℃", yieldStrength: 190 },
+                        { grade: "1.4404 (X2CrNiMo17-12-2)", description: "Low carbon austenitic stainless steel forging", tempRange: "-196~450℃", yieldStrength: 175 },
+                    ],
+                    shell: [
+                        { grade: "1.4301 (X5CrNi18-10)", description: "Austenitic stainless steel", tempRange: "-196~550℃", yieldStrength: 190 },
+                        { grade: "1.4404 (X2CrNiMo17-12-2)", description: "Low carbon austenitic stainless steel", tempRange: "-196~450℃", yieldStrength: 175 },
+                    ],
+                    head: [
+                        { grade: "1.4301 (X5CrNi18-10)", description: "Austenitic stainless steel for heads", tempRange: "-196~550℃", yieldStrength: 190 },
+                        { grade: "1.4404 (X2CrNiMo17-12-2)", description: "Low carbon austenitic stainless steel for heads", tempRange: "-196~450℃", yieldStrength: 175 },
+                    ],
+                    nozzle: [
+                        { grade: "1.4301 (X5CrNi18-10)", description: "Austenitic stainless steel pipe", tempRange: "-196~550℃", yieldStrength: 190 },
+                        { grade: "1.4404 (X2CrNiMo17-12-2)", description: "Low carbon austenitic stainless steel pipe", tempRange: "-196~450℃", yieldStrength: 175 },
+                    ]
+                },
+            },
+        };
+
+        // ==================== 介质名称映射 ====================
+        const MEDIUM_NAMES = {
+            '水': { en: 'Water', cn: '水', bilingual: 'Water / 水' },
+            '导热油': { en: 'Thermal Oil', cn: '导热油', bilingual: 'Thermal Oil / 导热油' },
+            '蒸汽': { en: 'Steam', cn: '蒸汽', bilingual: 'Steam / 蒸汽' },
+            '空气': { en: 'Air', cn: '空气', bilingual: 'Air / 空气' },
+            '氮气': { en: 'Nitrogen', cn: '氮气', bilingual: 'Nitrogen / 氮气' },
+            '氢气': { en: 'Hydrogen', cn: '氢气', bilingual: 'Hydrogen / 氢气' },
+            '二氧化碳': { en: 'CO2', cn: '二氧化碳', bilingual: 'CO2 / 二氧化碳' },
+            '天然气': { en: 'Natural Gas', cn: '天然气', bilingual: 'Natural Gas / 天然气' },
+            '腐蚀性介质': { en: 'Corrosive Medium', cn: '腐蚀性介质', bilingual: 'Corrosive Medium / 腐蚀性介质' },
+            '酸碱溶液': { en: 'Acid/Alkali Solution', cn: '酸碱溶液', bilingual: 'Acid/Alkali Solution / 酸碱溶液' }
+        };
+
+        // ==================== 介质物性数据库 ====================
+        const MEDIUM_PROPERTIES = {
+            '水': { type: 'liquid', density: (T) => Math.max(800, 1000 - 0.08 * T), viscosity: (T) => Math.max(0.3, 1.0 * Math.exp(-0.023 * (T - 20))), name: 'Water' },
+            '导热油': { type: 'liquid', density: (T) => Math.max(700, 870 - 0.65 * T), viscosity: (T) => Math.max(1, 50 * Math.exp(-0.02 * (T - 40))), name: 'Thermal Oil' },
+            '蒸汽': { type: 'gas', molarMass: 18, density: (P, T) => P * 18 / (8.314 * (T + 273.15)) * 1000, viscosity: (T) => Math.max(0.008, 0.010 + 0.00004 * T), name: 'Steam' },
+            '空气': { type: 'gas', molarMass: 29, density: (P, T) => P * 29 / (8.314 * (T + 273.15)) * 1000, viscosity: (T) => Math.max(0.015, 0.018 + 0.00004 * T), name: 'Air' },
+            '氮气': { type: 'gas', molarMass: 28, density: (P, T) => P * 28 / (8.314 * (T + 273.15)) * 1000, viscosity: (T) => Math.max(0.015, 0.018 + 0.00004 * T), name: 'Nitrogen' },
+            '氢气': { type: 'gas', molarMass: 2, density: (P, T) => P * 2 / (8.314 * (T + 273.15)) * 1000, viscosity: (T) => Math.max(0.008, 0.009 + 0.00002 * T), name: 'Hydrogen' },
+            '二氧化碳': { type: 'gas', molarMass: 44, density: (P, T) => P * 44 / (8.314 * (T + 273.15)) * 1000, viscosity: (T) => Math.max(0.012, 0.015 + 0.000035 * T), name: 'CO2' },
+            '天然气': { type: 'gas', molarMass: 16, density: (P, T) => P * 16 / (8.314 * (T + 273.15)) * 1000, viscosity: (T) => Math.max(0.009, 0.011 + 0.000025 * T), name: 'Natural Gas' },
+            '腐蚀性介质': { type: 'liquid', density: (T) => 1100, viscosity: (T) => 1.5, name: 'Corrosive Medium' },
+            '酸碱溶液': { type: 'liquid', density: (T) => 1050, viscosity: (T) => 1.2, name: 'Acid/Alkali Solution' }
+        };
+
+        // ==================== 容器直径系列 ====================
+        const DN_SERIES = [
+            { dn: 150, odMm: 159 }, { dn: 200, odMm: 219 }, { dn: 250, odMm: 273 },
+            { dn: 300, odMm: 325 }, { dn: 350, odMm: 377 }, { dn: 400, odMm: 426 },
+            { dn: 450, odMm: 480 }, { dn: 500, odMm: 530 }, { dn: 600, odMm: 630 },
+            { dn: 700, odMm: 720 }, { dn: 800, odMm: 820 }, { dn: 900, odMm: 920 },
+            { dn: 1000, odMm: 1020 }, { dn: 1100, odMm: 1120 }, { dn: 1200, odMm: 1220 },
+            { dn: 1300, odMm: 1320 }, { dn: 1400, odMm: 1420 }, { dn: 1500, odMm: 1520 },
+            { dn: 1600, odMm: 1620 },
+        ];
+
+        const NPS_SERIES = [
+            { nps: 6, odMm: 168.3 }, { nps: 8, odMm: 219.1 }, { nps: 10, odMm: 273.0 },
+            { nps: 12, odMm: 323.8 }, { nps: 14, odMm: 355.6 }, { nps: 16, odMm: 406.4 },
+            { nps: 18, odMm: 457.0 }, { nps: 20, odMm: 508.0 }, { nps: 24, odMm: 610.0 },
+            { nps: 28, odMm: 711.0 }, { nps: 32, odMm: 813.0 }, { nps: 36, odMm: 914.4 },
+            { nps: 40, odMm: 1016.0 }, { nps: 42, odMm: 1066.8 }, { nps: 48, odMm: 1219.2 },
+            { nps: 54, odMm: 1371.6 }, { nps: 60, odMm: 1524.0 }, { nps: 64, odMm: 1625.6 },
+        ];
+
+        const NOZZLE_DN_SERIES = [
+            { dn: 25, odMm: 32 }, { dn: 32, odMm: 38 }, { dn: 40, odMm: 45 },
+            { dn: 50, odMm: 57 }, { dn: 65, odMm: 76 }, { dn: 80, odMm: 89 },
+            { dn: 100, odMm: 108 }, { dn: 125, odMm: 133 }, { dn: 150, odMm: 159 },
+            { dn: 200, odMm: 219 }, { dn: 250, odMm: 273 }, { dn: 300, odMm: 325 },
+            { dn: 350, odMm: 377 }, { dn: 400, odMm: 426 }, { dn: 450, odMm: 480 },
+            { dn: 500, odMm: 530 }, { dn: 600, odMm: 630 }, { dn: 700, odMm: 720 },
+            { dn: 800, odMm: 820 }, { dn: 900, odMm: 920 }, { dn: 1000, odMm: 1020 },
+            { dn: 1100, odMm: 1120 }, { dn: 1200, odMm: 1220 }, { dn: 1300, odMm: 1320 },
+            { dn: 1400, odMm: 1420 }, { dn: 1500, odMm: 1520 },
+        ];
+
+        const NOZZLE_NPS_SERIES = [
+            { nps: 1, odMm: 33.4 }, { nps: 1.5, odMm: 48.3 }, { nps: 2, odMm: 60.3 },
+            { nps: 3, odMm: 88.9 }, { nps: 4, odMm: 114.3 }, { nps: 6, odMm: 168.3 },
+            { nps: 8, odMm: 219.1 }, { nps: 10, odMm: 273.0 }, { nps: 12, odMm: 323.8 },
+            { nps: 14, odMm: 355.6 }, { nps: 16, odMm: 406.4 }, { nps: 18, odMm: 457.0 },
+            { nps: 20, odMm: 508.0 }, { nps: 24, odMm: 610.0 }, { nps: 28, odMm: 711.0 },
+            { nps: 32, odMm: 813.0 }, { nps: 36, odMm: 914.4 }, { nps: 40, odMm: 1016.0 },
+            { nps: 42, odMm: 1066.8 }, { nps: 48, odMm: 1219.2 }, { nps: 54, odMm: 1371.6 },
+            { nps: 60, odMm: 1524.0 },
+        ];
+
+        const PN_CLASSES = [
+            { pn: 10, maxPressure: 10 }, { pn: 16, maxPressure: 16 }, { pn: 20, maxPressure: 20 },
+            { pn: 25, maxPressure: 25 }, { pn: 40, maxPressure: 40 }, { pn: 63, maxPressure: 63 },
+            { pn: 100, maxPressure: 100 }, { pn: 160, maxPressure: 160 }, { pn: 250, maxPressure: 250 },
+        ];
+
+        const ASME_CLASSES = [
+            { class: 150, maxPressure: 19.6 }, { class: 300, maxPressure: 51.1 },
+            { class: 600, maxPressure: 102.1 }, { class: 900, maxPressure: 153.2 },
+            { class: 1500, maxPressure: 255.3 },
+        ];
+
+        const DESIGN_LIMITS = {
+            maxLength: 4000, maxLDRatio: 12, optimalLDRatioMin: 5, optimalLDRatioMax: 8,
+            layoutMarginMin: 1.10, layoutMarginMax: 1.30, uTubeLengthFactor: 0.95, effectiveLengthFactor: 0.90
+        };
+
+        const HEATING_TUBE = {
+            diameter: 12.5, minBendRadius: 25, tubePitch: 25,
+            surfaceLoad: {
+                water: { min: 3.0, max: 8.0, recommended: 5.5 },
+                oil: { min: 2.0, max: 4.0, recommended: 3.0 },
+                air: { min: 1.5, max: 3.0, recommended: 2.0 },
+                nitrogen: { min: 1.5, max: 3.0, recommended: 2.0 },
+                hydrogen: { min: 1.0, max: 2.5, recommended: 1.5 },
+                co2: { min: 1.5, max: 3.0, recommended: 2.0 },
+                steam: { min: 3.0, max: 6.0, recommended: 5.0 },
+                corrosive: { min: 2.5, max: 5.0, recommended: 4.0 },
+                default: { min: 3.0, max: 6.0, recommended: 5.0 }
+            }
+        };
+
+        const BAFFLE_CONFIG = {
+            type: 'single-segment', spacingFactors: [0.6, 0.8, 1.0, 1.2, 1.4], recommendedFactor: 1.0, cutRatio: 0.22,
+        };
+
+        // ==================== 工具函数 ====================
+        function getSurfaceLoad(medium) {
+            const mediumMap = { '水': HEATING_TUBE.surfaceLoad.water, '导热油': HEATING_TUBE.surfaceLoad.oil, '空气': HEATING_TUBE.surfaceLoad.air, '氮气': HEATING_TUBE.surfaceLoad.nitrogen, '氢气': HEATING_TUBE.surfaceLoad.hydrogen, '二氧化碳': HEATING_TUBE.surfaceLoad.co2, '天然气': HEATING_TUBE.surfaceLoad.air, '蒸汽': HEATING_TUBE.surfaceLoad.steam, '腐蚀性介质': HEATING_TUBE.surfaceLoad.corrosive, '酸碱溶液': HEATING_TUBE.surfaceLoad.corrosive };
+            return mediumMap[medium] || HEATING_TUBE.surfaceLoad.default;
+        }
+
+        function getMediumProperties(medium, temperature, pressure) {
+            const props = MEDIUM_PROPERTIES[medium];
+            if (!props) return null;
+            let density, viscosity;
+            if (props.type === 'liquid') {
+                density = props.density(temperature);
+                viscosity = props.viscosity(temperature);
+            } else {
+                const absPressure = (pressure || 1) + 1;
+                density = props.density(absPressure, temperature);
+                viscosity = props.viscosity(temperature);
+            }
+            return { type: props.type, density: Math.max(0.1, density), viscosity: Math.max(0.001, viscosity), name: props.name };
+        }
+
+        function isAsmeStandard(standard) { return standard === 'ASME' || standard === 'ASME+U' || standard === 'ASME+U+NB'; }
+
+        function getPressureClass(pressure, standard) {
+            if (isAsmeStandard(standard)) {
+                return ASME_CLASSES.find(c => c.maxPressure >= pressure) || ASME_CLASSES[ASME_CLASSES.length - 1];
+            } else {
+                return PN_CLASSES.find(p => p.maxPressure >= pressure) || PN_CLASSES[PN_CLASSES.length - 1];
+            }
+        }
+
+        function roundTo5Or0(value) { return Math.round(value / 5) * 5; }
+
+        // ==================== 压力降计算函数 ====================
+        function calculateBaffleCount(vesselLength, baffleSpacing) { return Math.max(1, Math.floor(vesselLength / baffleSpacing) - 1); }
+        function calculateCrossFlowArea(vesselDiameter, baffleSpacing, tubeDiameter, tubePitch) {
+            const B = baffleSpacing / 1000, D_s = vesselDiameter / 1000, d_o = tubeDiameter / 1000, P_t = tubePitch / 1000;
+            return B * D_s * (1 - d_o / P_t);
+        }
+        function calculateEquivalentDiameter(tubeDiameter, tubePitch) { return 1.1 * (tubePitch - tubeDiameter) / 1000; }
+
+        function calculateNozzlePressureDrop(flowRateM3h, nozzleOdMm, density, lossCoeff) {
+            const d = nozzleOdMm / 1000, A = Math.PI * d * d / 4;
+            const Q = flowRateM3h / 3600, u = Q / A;
+            const deltaP = lossCoeff * (density * u * u / 2);
+            return { pressureDrop: deltaP / 1000, velocity: u, area: A };
+        }
+
+        function calculatePressureDrop(params) {
+            const { vesselDiameter, vesselLength, baffleSpacing, flowRateM3h, density, viscosity, tubeDiameter, tubePitch, inletNozzleOd, outletNozzleOd } = params;
+            const D_s = vesselDiameter / 1000, B = baffleSpacing / 1000;
+            const baffleCount = calculateBaffleCount(vesselLength, baffleSpacing);
+            const A_s = calculateCrossFlowArea(vesselDiameter, baffleSpacing, tubeDiameter, tubePitch);
+            const Q = flowRateM3h / 3600, u_s = Q / A_s, G_s = density * u_s;
+            const D_e = calculateEquivalentDiameter(tubeDiameter, tubePitch);
+            const mu = viscosity * 0.001, Re = D_e * G_s / mu;
+            let f_s = Re < 10 ? 5.0 : (Re < 100 ? 2.0 : 1.728 * Math.pow(Re, -0.188));
+            const shellDrop = f_s * G_s * G_s * D_s * (baffleCount + 1) / (2 * density * D_e);
+            const inletDrop = calculateNozzlePressureDrop(flowRateM3h, inletNozzleOd, density, 1.5);
+            const outletDrop = calculateNozzlePressureDrop(flowRateM3h, outletNozzleOd, density, 1.0);
+            const totalDrop = shellDrop + inletDrop.pressureDrop * 1000 + outletDrop.pressureDrop * 1000;
+            return {
+                totalDrop: totalDrop / 1000, shellDrop: shellDrop / 1000,
+                inletDrop: inletDrop.pressureDrop, outletDrop: outletDrop.pressureDrop,
+                inletVelocity: inletDrop.velocity, outletVelocity: outletDrop.velocity,
+                baffleCount, shellVelocity: u_s, crossFlowArea: A_s, reynoldsNumber: Re, frictionFactor: f_s, equivalentDiameter: D_e
+            };
+        }
+
+        // ==================== 核心计算函数 ====================
+        function calculateTubeLayout(vesselOdMm, tubeDiameter, tubePitch) {
+            const clearance = 12, layoutRadius = (vesselOdMm - 2 * clearance) / 2, tubeRadius = tubeDiameter / 2;
+            const tubes = [], rowHeight = tubePitch * Math.sqrt(3) / 2, maxRows = Math.ceil(layoutRadius / rowHeight) + 1;
+            for (let row = -maxRows; row <= maxRows; row++) {
+                const y = row * rowHeight, offsetX = (row % 2 === 0) ? 0 : tubePitch / 2;
+                const yLimit = Math.sqrt(Math.max(0, layoutRadius * layoutRadius - y * y));
+                const colsInRow = Math.floor(yLimit / tubePitch);
+                for (let col = -colsInRow; col <= colsInRow; col++) {
+                    const x = col * tubePitch + offsetX, distFromCenter = Math.sqrt(x * x + y * y);
+                    if (distFromCenter + tubeRadius <= layoutRadius) tubes.push({ x, y, row, col });
+                }
+            }
+            return { tubes, maxTubeHoles: tubes.length, maxUTubes: Math.floor(tubes.length / 2), layoutRadius, clearance, vesselDiameter: vesselOdMm };
+        }
+
+        function calculateRequiredVesselLength(powerPerTube, surfaceLoad, tubeDiameter, minBendRadius) {
+            const P = powerPerTube * 1000, D = tubeDiameter / 10, q = surfaceLoad, R = minBendRadius / 10;
+            const L_eff = P / (Math.PI * D * q), L_exp = L_eff / DESIGN_LIMITS.effectiveLengthFactor;
+            const L_u = (L_exp - Math.PI * R) / 2, L_v = L_u / DESIGN_LIMITS.uTubeLengthFactor;
+            return { effectiveLength: Math.round(L_eff * 10), expandedLength: Math.round(L_exp * 10), uTubeLength: Math.round(L_u * 10), vesselLength: Math.round(L_v * 10) };
+        }
+
+        function calculateUTubeDimensions(vesselLength, tubeDiameter, minBendRadius) {
+            const uTubeLength = vesselLength * DESIGN_LIMITS.uTubeLengthFactor;
+            const expandedLength = 2 * uTubeLength + Math.PI * minBendRadius;
+            const effectiveLength = expandedLength * DESIGN_LIMITS.effectiveLengthFactor;
+            return { uTubeLength: Math.round(uTubeLength), expandedLength: Math.round(expandedLength), effectiveLength: Math.round(effectiveLength) };
+        }
+
+        function calculateSurfaceLoad(powerPerTube, effectiveLength, tubeDiameter) {
+            const P = powerPerTube * 1000, D = tubeDiameter / 10, L = effectiveLength / 10;
+            return Math.round((P / (Math.PI * D * L)) * 10) / 10;
+        }
+
+        function designForDiameter(vessel, totalPower, voltage, medium, installationType, standard) {
+            const surfaceLoadInfo = getSurfaceLoad(medium), targetSurfaceLoad = surfaceLoadInfo.recommended;
+            const tubeDiameter = HEATING_TUBE.diameter, tubePitch = HEATING_TUBE.tubePitch, minBendRadius = HEATING_TUBE.minBendRadius;
+            const tubeStep = voltage >= 380 ? 3 : 1;
+            const layout = calculateTubeLayout(vessel.odMm, tubeDiameter, tubePitch);
+            let bestDesign = null, bestScore = Infinity;
+            const minUTubes = Math.ceil((totalPower / 5) / tubeStep) * tubeStep;
+            for (let uTubeCount = minUTubes; uTubeCount <= layout.maxUTubes; uTubeCount += tubeStep) {
+                const powerPerTube = totalPower / uTubeCount;
+                if (powerPerTube < 0.5 || powerPerTube > 5) continue;
+                const required = calculateRequiredVesselLength(powerPerTube, targetSurfaceLoad, tubeDiameter, minBendRadius);
+                let vesselLength = required.vesselLength;
+                const minLength = installationType === "vertical" ? vessel.odMm * 1.5 : vessel.odMm * 2;
+                vesselLength = Math.max(vesselLength, minLength);
+                vesselLength = roundTo5Or0(vesselLength);
+                vesselLength = Math.min(vesselLength, DESIGN_LIMITS.maxLength);
+                const uTubeDims = calculateUTubeDimensions(vesselLength, tubeDiameter, minBendRadius);
+                const actualSurfaceLoad = calculateSurfaceLoad(powerPerTube, uTubeDims.effectiveLength, tubeDiameter);
+                const ldRatio = vesselLength / vessel.odMm;
+                const requiredTubeHoles = uTubeCount * 2, margin = layout.maxTubeHoles / requiredTubeHoles;
+                const isValid = ldRatio <= DESIGN_LIMITS.maxLDRatio && vesselLength <= DESIGN_LIMITS.maxLength && actualSurfaceLoad >= surfaceLoadInfo.min && actualSurfaceLoad <= surfaceLoadInfo.max && margin >= 1.0;
+                const marginScore = Math.abs(margin - 1.20) * 100, ldScore = Math.abs(ldRatio - 6.5) * 10, surfaceLoadScore = Math.abs(actualSurfaceLoad - targetSurfaceLoad) * 5;
+                const totalScore = marginScore + ldScore + surfaceLoadScore;
+                if (isValid && totalScore < bestScore) {
+                    bestScore = totalScore;
+                    bestDesign = { vesselInfo: vessel, vesselOdMm: vessel.odMm, uTubeCount, requiredTubeHoles, powerPerTube: Math.round(powerPerTube * 100) / 100, vesselLength, uTubeLength: uTubeDims.uTubeLength, expandedLength: uTubeDims.expandedLength, effectiveLength: uTubeDims.effectiveLength, surfaceLoad: actualSurfaceLoad, ldRatio: Math.round(ldRatio * 100) / 100, margin: Math.round(margin * 100), maxTubeHoles: layout.maxTubeHoles, score: Math.round(totalScore * 10) / 10, layout, tubePitch, minBendRadius, surfaceLoadInfo, isValid };
+                }
+            }
+            return bestDesign;
+        }
+
+        function optimizeDesign(totalPower, voltage, medium, installationType, standard) {
+            const seriesArray = isAsmeStandard(standard) ? NPS_SERIES : DN_SERIES;
+            let bestDesign = null, bestScore = Infinity;
+            for (const vessel of seriesArray) {
+                const design = designForDiameter(vessel, totalPower, voltage, medium, installationType, standard);
+                if (design && design.isValid && design.score < bestScore) { bestScore = design.score; bestDesign = design; }
+            }
+            return bestDesign;
+        }
+
+        function getAllOptions(totalPower, voltage, medium, installationType, standard, optimalVessel) {
+            const seriesArray = isAsmeStandard(standard) ? NPS_SERIES : DN_SERIES;
+            const options = [];
+            let optimalIndex = seriesArray.findIndex(v => v.odMm === optimalVessel.odMm);
+            if (optimalIndex === -1) optimalIndex = 0;
+            const startIndex = Math.max(0, optimalIndex - 2), endIndex = Math.min(seriesArray.length - 1, optimalIndex + 2);
+            for (let i = startIndex; i <= endIndex; i++) {
+                const vessel = seriesArray[i];
+                const design = designForDiameter(vessel, totalPower, voltage, medium, installationType, standard);
+                options.push({ vessel, design, isOptimal: vessel.odMm === optimalVessel.odMm, isValid: design ? design.isValid : false });
+            }
+            return options;
+        }
+
+        function calculateNozzleSizes(power, medium, vesselOdMm, standard, pressure) {
+            let flowFactor = 1;
+            if (medium === '水' || medium === '蒸汽') flowFactor = 1.0;
+            else if (medium === '导热油') flowFactor = 1.2;
+            else if (medium === '空气' || medium === '氮气' || medium === '天然气' || medium === '氢气' || medium === '二氧化碳') flowFactor = 1.5;
+            let baseSize;
+            if (power <= 20) baseSize = 50;
+            else if (power <= 50) baseSize = 65;
+            else if (power <= 100) baseSize = 80;
+            else if (power <= 200) baseSize = 100;
+            else baseSize = 125;
+            let targetSize = Math.round(baseSize * flowFactor);
+            targetSize = Math.min(targetSize, Math.floor(vesselOdMm / 2));
+            let inletNozzle, outletNozzle;
+            if (isAsmeStandard(standard)) {
+                inletNozzle = NOZZLE_NPS_SERIES.find(n => n.odMm >= targetSize) || NOZZLE_NPS_SERIES[NOZZLE_NPS_SERIES.length - 1];
+                outletNozzle = NOZZLE_NPS_SERIES.find(n => n.nps >= inletNozzle.nps) || inletNozzle;
+            } else {
+                inletNozzle = NOZZLE_DN_SERIES.find(n => n.odMm >= targetSize) || NOZZLE_DN_SERIES[NOZZLE_DN_SERIES.length - 1];
+                outletNozzle = NOZZLE_DN_SERIES.find(n => n.dn >= inletNozzle.dn) || inletNozzle;
+            }
+            return { inletNozzle, outletNozzle, inletPressureClass: getPressureClass(pressure, standard), outletPressureClass: getPressureClass(pressure, standard) };
+        }
+
+        function calculateWallThickness(diameter, pressure, materialType, standard) {
+            const E = 0.85;
+            let S = 120;
+            const materialData = MATERIAL_DATABASE[standard];
+            if (materialData && materialData[materialType] && materialData[materialType].shell && materialData[materialType].shell.length > 0) {
+                S = materialData[materialType].shell[0].yieldStrength * 0.6;
+            }
+            const thickness = (pressure * diameter) / (2 * S * E - pressure) + 2;
+            const standardThickness = [4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30];
+            return standardThickness.find(t => t >= thickness) || 30;
+        }
+
+        function generateValidations(result) {
+            const validations = [];
+            validations.push(result.tubes.maxTubeHoles >= result.tubes.requiredTubeHoles ? { pass: true, text: `布管空间充足 / Sufficient tube layout space (管孔: ${result.tubes.requiredTubeHoles}/${result.tubes.maxTubeHoles})` } : { pass: false, text: `布管空间不足 / Insufficient tube layout space` });
+            const margin = result.tubes.maxTubeHoles / result.tubes.requiredTubeHoles;
+            if (margin >= DESIGN_LIMITS.layoutMarginMin && margin <= DESIGN_LIMITS.layoutMarginMax) validations.push({ pass: true, text: `布管裕量最佳 / Optimal margin (${(margin * 100).toFixed(0)}%)` });
+            else if (margin > DESIGN_LIMITS.layoutMarginMax) validations.push({ pass: true, text: `布管裕量偏大 / Large margin (${(margin * 100).toFixed(0)}%)` });
+            else if (margin >= 1.0) validations.push({ pass: true, text: `布管裕量偏小 / Small margin (${(margin * 100).toFixed(0)}%)` });
+            else validations.push({ pass: false, text: `布管裕量不足 / Insufficient margin (${(margin * 100).toFixed(0)}%)` });
+            if (result.input.voltage >= 380) validations.push(result.tubes.count % 3 === 0 ? { pass: true, text: `加热管数量为3的倍数 / Heating element count is multiple of 3 (${result.tubes.count}根)` } : { pass: false, text: `加热管数量不是3的倍数 / Heating element count not multiple of 3` });
+            const slInfo = result.tubes.surfaceLoadInfo;
+            if (result.tubes.surfaceLoad >= slInfo.min && result.tubes.surfaceLoad <= slInfo.max) validations.push({ pass: true, text: `表面负荷合理 / Surface load OK (${result.tubes.surfaceLoad} W/cm²)` });
+            else if (result.tubes.surfaceLoad > slInfo.max) validations.push({ pass: false, text: `表面负荷偏高 / Surface load high (${result.tubes.surfaceLoad} > ${slInfo.max} W/cm²)` });
+            else validations.push({ pass: true, text: `表面负荷偏低 / Surface load low (${result.tubes.surfaceLoad} W/cm²)` });
+            const ldRatio = result.vessel.ldRatio;
+            if (ldRatio >= DESIGN_LIMITS.optimalLDRatioMin && ldRatio <= DESIGN_LIMITS.optimalLDRatioMax) validations.push({ pass: true, text: `长径比最佳 / Optimal L/D ratio (L/D = ${ldRatio})` });
+            else if (ldRatio <= DESIGN_LIMITS.maxLDRatio) validations.push({ pass: true, text: `长径比合理 / Acceptable L/D ratio (L/D = ${ldRatio})` });
+            else validations.push({ pass: false, text: `长径比偏大 / L/D ratio too high (L/D = ${ldRatio})` });
+            validations.push(result.vessel.length <= DESIGN_LIMITS.maxLength ? { pass: true, text: `容器长度合理 / Vessel length OK (${result.vessel.length}mm)` } : { pass: false, text: `容器长度超限 / Vessel length exceeds limit` });
+            const pnClass = result.pressureClass;
+            if (isAsmeStandard(result.input.standard)) validations.push({ pass: true, text: `压力等级 / Pressure Class: Class ${pnClass.class}` });
+            else validations.push({ pass: true, text: `压力等级 / Pressure Class: PN${pnClass.pn}` });
+            return validations;
+        }
+
+        function generateRecommendations(params) {
+            const recommendations = [];
+            if (params.pressure > 25) recommendations.push("设计压力较高，建议选用高强度材料 / High pressure, recommend high-strength material");
+            if (params.temperature > 300) recommendations.push("工作温度较高，建议选用耐高温材料 / High temperature, recommend heat-resistant material");
+            if (params.medium.includes("腐蚀") || params.medium.includes("酸") || params.medium.includes("碱")) recommendations.push("介质具有腐蚀性，建议选用不锈钢材料 / Corrosive medium, recommend stainless steel");
+            if (params.installationType === "vertical") recommendations.push("立式安装时，需确保基础承载能力 / Vertical installation requires adequate foundation");
+            else recommendations.push("卧式安装时，需考虑支座间距 / Horizontal installation requires proper support spacing");
+            if (params.uTubeCount > 50) recommendations.push("加热管数量较多，建议分区控制 / Many heating elements, recommend zone control");
+            if (params.voltage >= 380) recommendations.push("三相供电时，加热管已均匀分配到三相 / 3-phase power, heating elements evenly distributed");
+            return recommendations;
+        }
+
+        function buildResult(optimized, params) {
+            const { voltage, power, pressure, temperature, medium, installationType, standard, materialType, flowRate, flowRateUnit, operatingPressure } = params;
+            const wallThickness = calculateWallThickness(optimized.vesselOdMm, pressure, materialType, standard);
+            const pressureClass = getPressureClass(pressure, standard);
+            let current, phase, connectionType;
+            if (voltage >= 380) { phase = 3; current = power * 1000 / (voltage * Math.sqrt(3)); connectionType = "三相星形连接 / 3-Phase Star"; }
+            else { phase = 1; current = power * 1000 / voltage; connectionType = "单相并联连接 / 1-Phase Parallel"; }
+            const nozzles = calculateNozzleSizes(power, medium, optimized.vesselOdMm, standard, pressure);
+            const vesselVolume = Math.PI * Math.pow(optimized.vesselOdMm / 2, 2) * optimized.vesselLength / 1e9;
+            const vesselSurfaceArea = Math.PI * optimized.vesselOdMm * optimized.vesselLength / 1e6;
+            const D_cm = HEATING_TUBE.diameter / 10, L_eff_cm = optimized.effectiveLength / 10;
+            const singleTubeSurfaceArea = Math.PI * D_cm * L_eff_cm;
+            const totalTubeSurfaceArea = singleTubeSurfaceArea * optimized.uTubeCount;
+            const totalTubeSurfaceArea_m2 = totalTubeSurfaceArea / 10000;
+            const materialWeight = Math.round(vesselSurfaceArea * wallThickness * 7.85);
+            const result = {
+                input: { voltage, power, pressure, temperature, medium, installationType, standard, materialType, flowRate, flowRateUnit, operatingPressure },
+                tubes: { count: optimized.uTubeCount, requiredTubeHoles: optimized.requiredTubeHoles, powerPerTube: optimized.powerPerTube, diameter: HEATING_TUBE.diameter, minBendRadius: optimized.minBendRadius, tubePitch: optimized.tubePitch, uTubeLength: optimized.uTubeLength, expandedLength: optimized.expandedLength, effectiveLength: optimized.effectiveLength, surfaceLoad: optimized.surfaceLoad, surfaceLoadInfo: optimized.surfaceLoadInfo, maxTubeHoles: optimized.maxTubeHoles, singleTubeSurfaceArea: Math.round(singleTubeSurfaceArea * 10) / 10, totalTubeSurfaceArea: Math.round(totalTubeSurfaceArea_m2 * 100) / 100 },
+                vessel: { vesselInfo: optimized.vesselInfo, vesselOdMm: optimized.vesselOdMm, length: optimized.vesselLength, wallThickness, volume: Math.round(vesselVolume * 1000) / 1000, surfaceArea: Math.round(vesselSurfaceArea * 100) / 100, ldRatio: optimized.ldRatio },
+                nozzles, pressureClass, electrical: { current: Math.round(current * 10) / 10, phase, connectionType, voltage, power },
+                economics: { tubePowerDensity: optimized.surfaceLoad, materialWeight },
+                layout: optimized.layout
+            };
+            result.validations = generateValidations(result);
+            result.recommendations = generateRecommendations({ power, voltage, pressure, temperature, medium, uTubeCount: optimized.uTubeCount, installationType });
+            return result;
+        }
+
+        // ==================== UI 函数 ====================
+        let currentResult = null, currentOptions = [], currentParams = null, currentBaffleFactor = BAFFLE_CONFIG.recommendedFactor;
+        let actualInletNozzle = null, actualOutletNozzle = null;
+
+        function toggleAdvanced() {
+            const params = document.getElementById('advancedParams'), icon = document.getElementById('toggleIcon');
+            if (params.style.display === 'none') { params.style.display = 'block'; icon.textContent = '▲'; }
+            else { params.style.display = 'none'; icon.textContent = '▼'; }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            event.target.closest('.tab-btn').classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        function calculate() {
+            const voltage = parseFloat(document.getElementById('voltage').value);
+            const power = parseFloat(document.getElementById('power').value);
+            const pressure = parseFloat(document.getElementById('pressure').value);
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            const medium = document.getElementById('medium').value;
+            const installationType = document.getElementById('installationType').value;
+            const standard = document.getElementById('standard').value;
+            const materialType = document.getElementById('materialType').value;
+            const flowRate = parseFloat(document.getElementById('flowRate').value) || null;
+            const flowRateUnit = document.getElementById('flowRateUnit').value;
+            const operatingPressure = parseFloat(document.getElementById('operatingPressure').value) || null;
+
+            if (!power || power <= 0) { showError('请输入有效的功率值 / Please enter valid power value'); return; }
+            if (power > 3000) { showError('功率超过上限3000kW / Power exceeds limit 3000kW'); return; }
+
+            const btn = document.getElementById('calculateBtn'), btnIcon = document.getElementById('btnIcon'), btnText = document.getElementById('btnText');
+            btn.disabled = true; btnIcon.innerHTML = '<div class="spinner"></div>'; btnText.textContent = '计算中... / Calculating...';
+
+            currentParams = { voltage, power, pressure, temperature, medium, installationType, standard, materialType, flowRate, flowRateUnit, operatingPressure };
+            currentBaffleFactor = BAFFLE_CONFIG.recommendedFactor;
+
+            setTimeout(() => {
+                try {
+                    const optimized = optimizeDesign(power, voltage, medium, installationType, standard);
+                    if (!optimized) throw new Error("无法找到满足条件的设计方案 / Cannot find valid design");
+                    currentOptions = getAllOptions(power, voltage, medium, installationType, standard, optimized.vesselInfo);
+                    currentResult = buildResult(optimized, currentParams);
+                    actualInletNozzle = currentResult.nozzles.inletNozzle;
+                    actualOutletNozzle = currentResult.nozzles.outletNozzle;
+                    renderDiameterSelector();
+                    displayResults(currentResult);
+                    hideError();
+                } catch (err) { showError('计算失败: ' + err.message); console.error(err); }
+                finally { btn.disabled = false; btnIcon.textContent = '🧮'; btnText.textContent = '开始设计计算 / Calculate'; }
+            }, 500);
+        }
+
+        function renderDiameterSelector() {
+            const container = document.getElementById('diameterOptions'), isAsme = isAsmeStandard(currentParams.standard);
+            let html = '';
+            currentOptions.forEach(option => {
+                const label = isAsme ? `${option.vessel.nps}"` : `DN${option.vessel.dn}`;
+                const isActive = option.isOptimal ? 'active' : '', isInvalid = !option.isValid ? 'invalid' : '';
+                html += `<button class="diameter-btn ${isActive} ${isInvalid}" onclick="selectDiameter(${option.vessel.odMm})" ${!option.isValid ? 'disabled title="不满足设计要求"' : ''}>${label}</button>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function selectDiameter(vesselOdMm) {
+            const option = currentOptions.find(o => o.vessel.odMm === vesselOdMm);
+            if (!option || !option.design) return;
+            document.querySelectorAll('.diameter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            currentResult = buildResult(option.design, currentParams);
+            actualInletNozzle = currentResult.nozzles.inletNozzle;
+            actualOutletNozzle = currentResult.nozzles.outletNozzle;
+            displayResults(currentResult);
+        }
+
+        function renderBaffleSelector() {
+            const container = document.getElementById('baffleOptions');
+            if (!container) return;
+            let html = '';
+            BAFFLE_CONFIG.spacingFactors.forEach(factor => {
+                const isActive = factor === currentBaffleFactor ? 'active' : '';
+                html += `<button class="baffle-btn ${isActive}" onclick="selectBaffleSpacing(${factor})">${factor}D</button>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function selectBaffleSpacing(factor) {
+            currentBaffleFactor = factor;
+            document.querySelectorAll('.baffle-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            updatePressureDropDisplay();
+        }
+
+        function onNozzleChange(type) {
+            const selectId = type === 'inlet' ? 'actualInletSelect' : 'actualOutletSelect';
+            const select = document.getElementById(selectId);
+            const selectedIndex = select.selectedIndex;
+            const series = isAsmeStandard(currentParams.standard) ? NOZZLE_NPS_SERIES : NOZZLE_DN_SERIES;
+            if (type === 'inlet') actualInletNozzle = series[selectedIndex];
+            else actualOutletNozzle = series[selectedIndex];
+            const odCell = document.getElementById(type === 'inlet' ? 'inletOdCell' : 'outletOdCell');
+            odCell.textContent = (type === 'inlet' ? actualInletNozzle.odMm : actualOutletNozzle.odMm) + 'mm';
+            updatePressureDropDisplay();
+        }
+
+        function updatePressureDropDisplay() {
+            if (!currentResult) return;
+            const flowRate = currentParams.flowRate, flowRateUnit = currentParams.flowRateUnit, temperature = currentParams.temperature, medium = currentParams.medium, operatingPressure = currentParams.operatingPressure || currentParams.pressure;
+            const contentDiv = document.getElementById('pressureDropContent');
+            if (!flowRate || flowRate <= 0) {
+                contentDiv.innerHTML = `<div class="alert alert-info"><div class="alert-title">📊 压力降计算 / Pressure Drop Calculation</div><p class="not-required">未要求 / Not Required</p><p style="margin-top: 0.5rem; font-size: 0.85rem;">如需计算压力降，请在高级参数中填写介质流量。<br>To calculate pressure drop, please enter flow rate in advanced parameters.</p></div>`;
+                return;
+            }
+            const mediumProps = getMediumProperties(medium, temperature, operatingPressure);
+            if (!mediumProps) { contentDiv.innerHTML = `<div class="alert alert-warning"><div class="alert-title">⚠️ 无法计算</div><p>无法获取介质物性数据</p></div>`; return; }
+            let flowRateM3h = flowRateUnit === 'kgh' ? flowRate / mediumProps.density : flowRate;
+            const baffleSpacing = currentBaffleFactor * currentResult.vessel.vesselOdMm;
+            const pressureDrop = calculatePressureDrop({ vesselDiameter: currentResult.vessel.vesselOdMm, vesselLength: currentResult.vessel.length, baffleSpacing, flowRateM3h, density: mediumProps.density, viscosity: mediumProps.viscosity, tubeDiameter: HEATING_TUBE.diameter, tubePitch: HEATING_TUBE.tubePitch, inletNozzleOd: actualInletNozzle.odMm, outletNozzleOd: actualOutletNozzle.odMm });
+            contentDiv.innerHTML = `
+                <div class="baffle-selector"><div class="baffle-selector-title">📐 折流板间距调整 / Baffle Spacing Adjustment<span style="font-weight:400;font-size:0.8rem;margin-left:auto;">点击选择不同间距查看压力降变化</span></div><div class="baffle-options" id="baffleOptions"></div></div>
+                <div class="pressure-drop-result"><div class="pressure-drop-value">${pressureDrop.totalDrop.toFixed(2)}</div><div class="pressure-drop-unit">kPa (${(pressureDrop.totalDrop / 100).toFixed(3)} bar)</div><div class="pressure-drop-label">总压力降 / Total Pressure Drop</div></div>
+                <div class="two-col">
+                    <div><h4 class="section-title">折流板参数 <span class="section-title-en">Baffle Parameters</span></h4><table class="table"><thead><tr><th>参数 Parameter</th><th>数值 Value</th><th>单位 Unit</th></tr></thead><tbody>
+                        <tr><td>折流板类型 / Baffle Type</td><td class="font-medium">单弓形 / Single Segment</td><td>-</td></tr>
+                        <tr><td>折流板间距 / Baffle Spacing</td><td class="font-medium">${baffleSpacing.toFixed(0)}</td><td>mm</td></tr>
+                        <tr><td>间距系数 / Spacing Factor</td><td class="font-medium">${currentBaffleFactor}D</td><td>-</td></tr>
+                        <tr><td>折流板数量 / Baffle Count</td><td class="font-medium">${pressureDrop.baffleCount}</td><td>个</td></tr>
+                        <tr><td>切口比例 / Cut Ratio</td><td class="font-medium">${(BAFFLE_CONFIG.cutRatio * 100).toFixed(0)}%</td><td>-</td></tr>
+                    </tbody></table></div>
+                    <div><h4 class="section-title">压力降详情 <span class="section-title-en">Pressure Drop Details</span></h4><table class="table"><thead><tr><th>参数 Parameter</th><th>数值 Value</th><th>单位 Unit</th></tr></thead><tbody>
+                        <tr><td>壳程流速 / Shell Velocity</td><td class="font-medium">${pressureDrop.shellVelocity.toFixed(3)}</td><td>m/s</td></tr>
+                        <tr><td>进口管口流速 / Inlet Velocity</td><td class="font-medium">${pressureDrop.inletVelocity.toFixed(3)}</td><td>m/s</td></tr>
+                        <tr><td>出口管口流速 / Outlet Velocity</td><td class="font-medium">${pressureDrop.outletVelocity.toFixed(3)}</td><td>m/s</td></tr>
+                        <tr><td>壳程压力降 / Shell Drop</td><td class="font-medium">${pressureDrop.shellDrop.toFixed(2)}</td><td>kPa</td></tr>
+                        <tr><td>进口压力降 / Inlet Drop</td><td class="font-medium">${pressureDrop.inletDrop.toFixed(2)}</td><td>kPa</td></tr>
+                        <tr><td>出口压力降 / Outlet Drop</td><td class="font-medium">${pressureDrop.outletDrop.toFixed(2)}</td><td>kPa</td></tr>
+                    </tbody></table></div>
+                </div>
+                <div class="info-box" style="margin-top: 1rem;"><h4>介质物性 / Medium Properties</h4>
+                    <div class="info-row"><span>介质类型 / Medium Type:</span><span class="value">${mediumProps.name}</span></div>
+                    <div class="info-row"><span>密度 / Density:</span><span class="value">${mediumProps.density.toFixed(2)} kg/m³</span></div>
+                    <div class="info-row"><span>粘度 / Viscosity:</span><span class="value">${mediumProps.viscosity.toFixed(4)} cP</span></div>
+                    <div class="info-row"><span>输入流量 / Input Flow:</span><span class="value">${flowRate} ${flowRateUnit === 'kgh' ? 'kg/h' : 'm³/h'}</span></div>
+                    <div class="info-row"><span>体积流量 / Volume Flow:</span><span class="value">${flowRateM3h.toFixed(2)} m³/h</span></div>
+                </div>`;
+            renderBaffleSelector();
+        }
+
+        function showError(message) { document.getElementById('errorAlert').style.display = 'block'; document.getElementById('errorMessage').textContent = message; }
+        function hideError() { document.getElementById('errorAlert').style.display = 'none'; }
+
+        function displayResults(result) {
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('resultsContent').style.display = 'block';
+            document.getElementById('diameterSelector').style.display = 'block';
+            const isAsme = isAsmeStandard(result.input.standard);
+            document.getElementById('statTubes').textContent = result.tubes.count;
+            if (isAsme) { document.getElementById('statDn').textContent = result.vessel.vesselInfo.nps + '"'; document.getElementById('statPn').textContent = 'Class ' + result.pressureClass.class; }
+            else { document.getElementById('statDn').textContent = 'DN' + result.vessel.vesselInfo.dn; document.getElementById('statPn').textContent = 'PN' + result.pressureClass.pn; }
+            document.getElementById('statLength').textContent = result.vessel.length;
+            let ldClass = result.vessel.ldRatio >= DESIGN_LIMITS.optimalLDRatioMin && result.vessel.ldRatio <= DESIGN_LIMITS.optimalLDRatioMax ? 'ld-good' : (result.vessel.ldRatio > DESIGN_LIMITS.optimalLDRatioMax ? 'ld-warning' : '');
+            let dimensionsHtml = isAsme ? `
+                <tr><td>公称尺寸 / Nominal Size</td><td class="font-medium">${result.vessel.vesselInfo.nps}"</td><td>NPS</td></tr>
+                <tr><td>外径 / Outside Diameter</td><td class="font-medium">${result.vessel.vesselOdMm}</td><td>mm</td></tr>
+                <tr><td>容器长度 / Vessel Length</td><td class="font-medium">${result.vessel.length}</td><td>mm</td></tr>
+                <tr><td>筒体壁厚 / Shell Thickness</td><td class="font-medium">${result.vessel.wallThickness}</td><td>mm</td></tr>
+                <tr><td>长径比 / L/D Ratio</td><td class="font-medium ${ldClass}">${result.vessel.ldRatio}</td><td>-</td></tr>
+                <tr><td>压力等级 / Pressure Class</td><td class="font-medium"><span class="class-badge">Class ${result.pressureClass.class}</span></td><td>-</td></tr>
+                <tr><td>设计压力 / Design Pressure</td><td class="font-medium">${result.input.pressure}</td><td>Barg</td></tr>
+                <tr><td>容器容积 / Volume</td><td class="font-medium">${result.vessel.volume}</td><td>m³</td></tr>` : `
+                <tr><td>公称直径 / Nominal Diameter</td><td class="font-medium">DN${result.vessel.vesselInfo.dn}</td><td>-</td></tr>
+                <tr><td>外径 / Outside Diameter</td><td class="font-medium">${result.vessel.vesselOdMm}</td><td>mm</td></tr>
+                <tr><td>容器长度 / Vessel Length</td><td class="font-medium">${result.vessel.length}</td><td>mm</td></tr>
+                <tr><td>筒体壁厚 / Shell Thickness</td><td class="font-medium">${result.vessel.wallThickness}</td><td>mm</td></tr>
+                <tr><td>长径比 / L/D Ratio</td><td class="font-medium ${ldClass}">${result.vessel.ldRatio}</td><td>-</td></tr>
+                <tr><td>压力等级 / Pressure Class</td><td class="font-medium"><span class="pressure-badge">PN${result.pressureClass.pn}</span></td><td>-</td></tr>
+                <tr><td>设计压力 / Design Pressure</td><td class="font-medium">${result.input.pressure}</td><td>Barg</td></tr>
+                <tr><td>容器容积 / Volume</td><td class="font-medium">${result.vessel.volume}</td><td>m³</td></tr>`;
+            document.getElementById('dimensionsTable').innerHTML = dimensionsHtml;
+
+            const nozzleSeries = isAsme ? NOZZLE_NPS_SERIES : NOZZLE_DN_SERIES;
+            const vesselOdMm = result.vessel.vesselOdMm;
+            const recommendedInletLabel = isAsme ? `${result.nozzles.inletNozzle.nps}"` : `DN${result.nozzles.inletNozzle.dn}`;
+            const recommendedOutletLabel = isAsme ? `${result.nozzles.outletNozzle.nps}"` : `DN${result.nozzles.outletNozzle.dn}`;
+            let inletOptions = '', outletOptions = '';
+            nozzleSeries.forEach((n, i) => {
+                if (n.odMm < vesselOdMm) {
+                    const label = isAsme ? `${n.nps}"` : `DN${n.dn}`;
+                    const inletSelected = n.odMm === actualInletNozzle.odMm ? 'selected' : '';
+                    const outletSelected = n.odMm === actualOutletNozzle.odMm ? 'selected' : '';
+                    inletOptions += `<option value="${i}" ${inletSelected}>${label}</option>`;
+                    outletOptions += `<option value="${i}" ${outletSelected}>${label}</option>`;
+                }
+            });
+            const pressureClassBadge = isAsme ? `<span class="class-badge">Class ${result.nozzles.inletPressureClass.class}</span>` : `<span class="pressure-badge">PN${result.nozzles.inletPressureClass.pn}</span>`;
+            let nozzlesHtml = `
+                <tr><td><span style="color:#3b82f6">▼</span> 进口 / Inlet</td><td class="recommended-value">${recommendedInletLabel}</td><td><select class="nozzle-select" id="actualInletSelect" onchange="onNozzleChange('inlet')">${inletOptions}</select></td><td id="inletOdCell">${actualInletNozzle.odMm}mm</td><td>${pressureClassBadge}</td></tr>
+                <tr><td><span style="color:#ef4444">▲</span> 出口 / Outlet</td><td class="recommended-value">${recommendedOutletLabel}</td><td><select class="nozzle-select" id="actualOutletSelect" onchange="onNozzleChange('outlet')">${outletOptions}</select></td><td id="outletOdCell">${actualOutletNozzle.odMm}mm</td><td>${pressureClassBadge}</td></tr>`;
+            document.getElementById('nozzlesTable').innerHTML = nozzlesHtml;
+
+            const margin = (result.tubes.maxTubeHoles / result.tubes.requiredTubeHoles * 100).toFixed(0);
+            document.getElementById('tubeDescription').innerHTML = `U形管安装到容器内，从管板到弯头顶端的距离为<strong>U形加热管长度</strong>（容器长度的95%）。U形管展开后总长度为<strong>U形管展开长度</strong>。实际发热部分为<strong>有效加热长度</strong>（展开长度的90%）。`;
+            document.getElementById('formulaBox').innerHTML = `① U形加热管长度 = 容器长度 × 0.95 = ${result.vessel.length} × 0.95 = <strong>${result.tubes.uTubeLength}mm</strong><br>② U形管展开长度 = 2 × U形加热管长度 + π × 弯曲半径 = 2×${result.tubes.uTubeLength} + π×${result.tubes.minBendRadius} = <strong>${result.tubes.expandedLength}mm</strong><br>③ 有效加热长度 = U形管展开长度 × 0.9 = ${result.tubes.expandedLength} × 0.9 = <strong>${result.tubes.effectiveLength}mm</strong>`;
+            document.getElementById('tubesTable').innerHTML = `
+                <tr><td>U形管数量 / U-Tube Count</td><td class="font-medium">${result.tubes.count}${result.input.voltage >= 380 ? ' (3的倍数)' : ''}</td><td>根</td></tr>
+                <tr><td>管孔数量 / Tube Holes</td><td class="font-medium">${result.tubes.requiredTubeHoles} (${result.tubes.count}×2)</td><td>个</td></tr>
+                <tr><td>单管功率 / Power per Element</td><td class="font-medium">${result.tubes.powerPerTube}</td><td>kW</td></tr>
+                <tr><td>加热管直径 / Element Diameter</td><td class="font-medium">${result.tubes.diameter}</td><td>mm</td></tr>
+                <tr><td>管间距 / Tube Pitch (2D)</td><td class="font-medium">${result.tubes.tubePitch}</td><td>mm</td></tr>
+                <tr><td>最小弯曲半径 / Min Bend Radius (2D)</td><td class="font-medium">${result.tubes.minBendRadius}</td><td>mm</td></tr>
+                <tr><td>U形加热管长度 / U-Tube Length</td><td class="font-medium">${result.tubes.uTubeLength}</td><td>mm</td></tr>
+                <tr><td>U形管展开长度 / Expanded Length</td><td class="font-medium">${result.tubes.expandedLength}</td><td>mm</td></tr>
+                <tr><td>有效加热长度 / Effective Length</td><td class="font-medium">${result.tubes.effectiveLength}</td><td>mm</td></tr>`;
+            document.getElementById('surfaceLoadTable').innerHTML = `
+                <tr><td>表面负荷 / Surface Load</td><td class="font-medium">${result.tubes.surfaceLoad}</td><td>W/cm²</td></tr>
+                <tr><td>推荐范围 / Recommended Range</td><td class="font-medium">${result.tubes.surfaceLoadInfo.min}~${result.tubes.surfaceLoadInfo.max}</td><td>W/cm²</td></tr>
+                <tr><td>布管裕量 / Layout Margin</td><td class="font-medium">${margin}%</td><td>推荐110-130%</td></tr>`;
+            const standardNames = { 'GB150': 'GB150', 'ASME': 'ASME', 'ASME+U': 'ASME+U', 'ASME+U+NB': 'ASME+U+NB', 'PED': 'PED' };
+            const materialNames = { 'carbonSteel': '碳钢 / Carbon Steel', 'stainlessSteel': '不锈钢 / Stainless Steel' };
+            document.getElementById('materialsSubtitle').textContent = `基于 ${standardNames[result.input.standard]} 标准 - ${materialNames[result.input.materialType]}`;
+            const materialData = MATERIAL_DATABASE[result.input.standard];
+            const materials = materialData ? materialData[result.input.materialType] : null;
+            let materialsHtml = '';
+            if (materials) {
+                const categories = [{ key: 'flange', title: '法兰材料', titleEn: 'Flange Material' }, { key: 'shell', title: '容器筒身材料', titleEn: 'Shell Material' }, { key: 'head', title: '容器封头材料', titleEn: 'Head Material' }, { key: 'nozzle', title: '接管材料', titleEn: 'Nozzle Material' }];
+                categories.forEach(cat => {
+                    if (materials[cat.key] && materials[cat.key].length > 0) {
+                        materialsHtml += `<div class="material-category"><div class="material-category-title">${cat.title} <span class="material-category-title-en">${cat.titleEn}</span></div><table class="table"><thead><tr><th>材料牌号 Grade</th><th>描述 Description</th><th>温度范围 Temp Range</th><th>屈服强度 Yield (MPa)</th></tr></thead><tbody>${materials[cat.key].map((m, i) => `<tr><td><span class="badge ${i === 0 ? 'badge-primary' : 'badge-outline'}">${m.grade}</span></td><td>${m.description}</td><td>${m.tempRange}</td><td>${m.yieldStrength}</td></tr>`).join('')}</tbody></table></div>`;
+                    }
+                });
+            }
+            document.getElementById('materialsContent').innerHTML = materialsHtml;
+            document.getElementById('electricalTable').innerHTML = `
+                <tr><td>额定电压 / Rated Voltage</td><td class="font-medium">${result.electrical.voltage}</td><td>V</td></tr>
+                <tr><td>额定功率 / Rated Power</td><td class="font-medium">${result.electrical.power}</td><td>kW</td></tr>
+                <tr><td>工作电流 / Operating Current</td><td class="font-medium">${result.electrical.current}</td><td>A</td></tr>
+                <tr><td>相数 / Phase</td><td class="font-medium">${result.electrical.phase}</td><td>相</td></tr>
+                <tr><td>接线方式 / Connection</td><td colspan="2" class="font-medium">${result.electrical.connectionType}</td></tr>`;
+            document.getElementById('economicsInfo').innerHTML = `
+                <div class="info-row"><span>加热管功率密度 / Element Power Density:</span><span class="value">${result.economics.tubePowerDensity} W/cm²</span></div>
+                <div class="info-row"><span>加热管总表面积 / Total Element Area:</span><span class="value">${result.tubes.totalTubeSurfaceArea} m²</span></div>
+                <div class="info-row"><span>估算材料重量 / Est. Material Weight:</span><span class="value">${result.economics.materialWeight} kg</span></div>`;
+            document.getElementById('validationList').innerHTML = result.validations.map(v => `<div class="validation-item"><span class="${v.pass ? 'check' : 'fail'}">${v.pass ? '✓' : '✗'}</span><span>${v.text}</span></div>`).join('');
+            document.getElementById('recommendationsList').innerHTML = result.recommendations.map(r => `<li><span class="icon">⚠️</span>${r}</li>`).join('');
+            updatePressureDropDisplay();
+            drawVesselDiagram(result);
+            drawTubeDiagram(result);
+        }
+
+        function drawVesselDiagram(result) {
+            const { vessel, input, tubes, nozzles } = result;
+            const diameter = vessel.vesselOdMm, length = vessel.length, wallThickness = vessel.wallThickness;
+            const isAsme = isAsmeStandard(input.standard);
+            const scale = Math.min(200 / length, 110 / diameter);
+            const scaledLength = length * scale, scaledDiameter = diameter * scale;
+            const isHorizontal = input.installationType === 'horizontal';
+            const svgWidth = isHorizontal ? scaledLength + 120 : scaledDiameter + 140;
+            const svgHeight = isHorizontal ? scaledDiameter + 190 : scaledLength + 170;
+            let svg = `<svg width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}" style="background:linear-gradient(135deg,#fafbfc 0%,#f5f7fa 100%);border-radius:8px;">`;
+            svg += `<text x="${svgWidth/2}" y="-7" text-anchor="middle" style="font-size:11px;font-weight:600;fill:#475569;">${isHorizontal ? '卧式安装 / Horizontal' : '立式安装 / Vertical'}</text>`;
+            const INLET_COLOR = '#3b82f6', OUTLET_COLOR = '#ef4444';
+            if (isHorizontal) {
+                const offsetX = 60, offsetY = 50;
+                svg += `<rect x="${offsetX}" y="${offsetY}" width="${scaledLength}" height="${scaledDiameter}" rx="${scaledDiameter/2}" fill="none" stroke="#64748b" stroke-width="2"/>`;
+                const wt = wallThickness * scale;
+                svg += `<rect x="${offsetX+wt}" y="${offsetY+wt}" width="${scaledLength-wt*2}" height="${scaledDiameter-wt*2}" rx="${(scaledDiameter-wt*2)/2}" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,2"/>`;
+                const tubeHoleCount = Math.min(tubes.requiredTubeHoles, 14);
+                for (let i = 0; i < tubeHoleCount; i++) {
+                    const y = offsetY + scaledDiameter * 0.1 + (scaledDiameter * 0.8) * i / Math.max(1, tubeHoleCount - 1);
+                    svg += `<line x1="${offsetX + scaledLength * 0.1}" y1="${y}" x2="${offsetX + scaledLength * 0.9}" y2="${y}" stroke="#f97316" stroke-width="2"/>`;
+                }
+                svg += `<rect x="${offsetX - 10}" y="${offsetY - 5}" width="10" height="${scaledDiameter + 10}" fill="none" stroke="#64748b" stroke-width="2"/>`;
+                const inletX = offsetX + scaledLength * 0.3;
+                svg += `<rect x="${inletX - 7}" y="${offsetY - 25}" width="14" height="25" fill="none" stroke="${INLET_COLOR}" stroke-width="2"/>`;
+                svg += `<polygon points="${inletX},${offsetY-35} ${inletX-6},${offsetY-25} ${inletX+6},${offsetY-25}" fill="${INLET_COLOR}"/>`;
+                const inletLabel = isAsme ? `${actualInletNozzle.nps}"` : `DN${actualInletNozzle.dn}`;
+                svg += `<text x="${inletX}" y="${offsetY - 42}" text-anchor="middle" style="font-size:9px;fill:${INLET_COLOR};font-weight:600;">Inlet ${inletLabel}</text>`;
+                const outletX = offsetX + scaledLength * 0.7;
+                svg += `<rect x="${outletX - 7}" y="${offsetY - 25}" width="14" height="25" fill="none" stroke="${OUTLET_COLOR}" stroke-width="2"/>`;
+                svg += `<polygon points="${outletX},${offsetY-35} ${outletX-6},${offsetY-25} ${outletX+6},${offsetY-25}" fill="${OUTLET_COLOR}"/>`;
+                const outletLabel = isAsme ? `${actualOutletNozzle.nps}"` : `DN${actualOutletNozzle.dn}`;
+                svg += `<text x="${outletX}" y="${offsetY - 42}" text-anchor="middle" style="font-size:9px;fill:${OUTLET_COLOR};font-weight:600;">Outlet ${outletLabel}</text>`;
+                svg += `<line x1="${offsetX}" y1="${offsetY+scaledDiameter+20}" x2="${offsetX+scaledLength}" y2="${offsetY+scaledDiameter+20}" stroke="#666" stroke-width="1"/>`;
+                svg += `<text x="${offsetX+scaledLength/2}" y="${offsetY+scaledDiameter+35}" text-anchor="middle" style="font-size:10px;fill:#475569;">L = ${length} mm</text>`;
+                const sizeLabel = isAsme ? `${vessel.vesselInfo.nps}"` : `DN${vessel.vesselInfo.dn}`;
+                svg += `<text x="${offsetX+scaledLength+25}" y="${offsetY+scaledDiameter/2+4}" style="font-size:10px;fill:#475569;">${sizeLabel}</text>`;
+                svg += `<path d="M ${offsetX+scaledLength*0.2} ${offsetY+scaledDiameter} L ${offsetX+scaledLength*0.15} ${offsetY+scaledDiameter+15} L ${offsetX+scaledLength*0.25} ${offsetY+scaledDiameter+15} Z" fill="#94a3b8"/>`;
+                svg += `<path d="M ${offsetX+scaledLength*0.8} ${offsetY+scaledDiameter} L ${offsetX+scaledLength*0.75} ${offsetY+scaledDiameter+15} L ${offsetX+scaledLength*0.85} ${offsetY+scaledDiameter+15} Z" fill="#94a3b8"/>`;
+            } else {
+                const offsetX = 70, offsetY = 40;
+                svg += `<rect x="${offsetX}" y="${offsetY}" width="${scaledDiameter}" height="${scaledLength}" rx="${scaledDiameter/2}" fill="none" stroke="#64748b" stroke-width="2"/>`;
+                const wt = wallThickness * scale;
+                svg += `<rect x="${offsetX+wt}" y="${offsetY+wt}" width="${scaledDiameter-wt*2}" height="${scaledLength-wt*2}" rx="${(scaledDiameter-wt*2)/2}" fill="none" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,2"/>`;
+                const tubeHoleCount = Math.min(tubes.requiredTubeHoles, 14);
+                for (let i = 0; i < tubeHoleCount; i++) {
+                    const x = offsetX + scaledDiameter * 0.1 + (scaledDiameter * 0.8) * i / Math.max(1, tubeHoleCount - 1);
+                    svg += `<line x1="${x}" y1="${offsetY + scaledLength * 0.1}" x2="${x}" y2="${offsetY + scaledLength * 0.85}" stroke="#f97316" stroke-width="2"/>`;
+                }
+                svg += `<rect x="${offsetX - 5}" y="${offsetY - 10}" width="${scaledDiameter + 10}" height="10" fill="none" stroke="#64748b" stroke-width="2"/>`;
+                const inletY = offsetY + scaledLength * 0.2;
+                svg += `<rect x="${offsetX - 25}" y="${inletY - 7}" width="25" height="14" fill="none" stroke="${INLET_COLOR}" stroke-width="2"/>`;
+                svg += `<polygon points="${offsetX-35},${inletY} ${offsetX-25},${inletY-6} ${offsetX-25},${inletY+6}" fill="${INLET_COLOR}"/>`;
+                const inletLabel = isAsme ? `${actualInletNozzle.nps}"` : `DN${actualInletNozzle.dn}`;
+                svg += `<text x="${offsetX - 40}" y="${inletY + 4}" text-anchor="end" style="font-size:9px;fill:${INLET_COLOR};font-weight:600;">Inlet ${inletLabel}</text>`;
+                const outletY = offsetY + scaledLength * 0.8;
+                svg += `<rect x="${offsetX + scaledDiameter}" y="${outletY - 7}" width="25" height="14" fill="none" stroke="${OUTLET_COLOR}" stroke-width="2"/>`;
+                svg += `<polygon points="${offsetX+scaledDiameter+35},${outletY} ${offsetX+scaledDiameter+25},${outletY-6} ${offsetX+scaledDiameter+25},${outletY+6}" fill="${OUTLET_COLOR}"/>`;
+                const outletLabel = isAsme ? `${actualOutletNozzle.nps}"` : `DN${actualOutletNozzle.dn}`;
+                svg += `<text x="${offsetX + scaledDiameter + 40}" y="${outletY + 4}" style="font-size:9px;fill:${OUTLET_COLOR};font-weight:600;">Outlet ${outletLabel}</text>`;
+                svg += `<line x1="${offsetX}" y1="${offsetY+scaledLength+20}" x2="${offsetX+scaledDiameter}" y2="${offsetY+scaledLength+20}" stroke="#666" stroke-width="1"/>`;
+                const sizeLabel = isAsme ? `${vessel.vesselInfo.nps}"` : `DN${vessel.vesselInfo.dn}`;
+                svg += `<text x="${offsetX+scaledDiameter/2}" y="${offsetY+scaledLength+35}" text-anchor="middle" style="font-size:10px;fill:#475569;">${sizeLabel}</text>`;
+                svg += `<text x="${offsetX+scaledDiameter+25}" y="${offsetY+scaledLength/2+4}" style="font-size:10px;fill:#475569;">L=${length}</text>`;
+                svg += `<rect x="${offsetX+scaledDiameter*0.3}" y="${offsetY+scaledLength}" width="${scaledDiameter*0.4}" height="10" fill="#94a3b8"/>`;
+            }
+            const legendY = isHorizontal ? scaledDiameter + 90 : scaledLength + 90;
+            svg += `<line x1="10" y1="${legendY}" x2="25" y2="${legendY}" stroke="#f97316" stroke-width="2"/>`;
+            svg += `<text x="30" y="${legendY+4}" style="font-size:10px;fill:#475569;">Heating Element</text>`;
+            svg += `<rect x="130" y="${legendY-5}" width="10" height="10" fill="none" stroke="${INLET_COLOR}" stroke-width="1.5"/>`;
+            svg += `<text x="145" y="${legendY+4}" style="font-size:10px;fill:${INLET_COLOR};">Inlet</text>`;
+            svg += `<rect x="180" y="${legendY-5}" width="10" height="10" fill="none" stroke="${OUTLET_COLOR}" stroke-width="1.5"/>`;
+            svg += `<text x="195" y="${legendY+4}" style="font-size:10px;fill:${OUTLET_COLOR};">Outlet</text>`;
+            svg += '</svg>';
+            document.getElementById('vesselDiagram').innerHTML = svg;
+        }
+
+        function drawTubeDiagram(result) {
+            const { layout, tubes } = result;
+            const tubeDiameter = tubes.diameter, tubePitch = tubes.tubePitch;
+            if (!layout || !layout.tubes || layout.tubes.length === 0) { document.getElementById('tubeDiagram').innerHTML = '<div style="text-align:center;color:#64748b;">无法生成布置图 / Cannot generate layout</div>'; return; }
+            const scale = Math.min(180 / (layout.layoutRadius * 2), 1.0);
+            const svgSize = layout.layoutRadius * 2 * scale + 80;
+            const centerX = svgSize / 2, centerY = svgSize / 2 + 10;
+            const tubeRadius = Math.max(5, (tubeDiameter / 2) * scale);
+            let svg = `<svg width="${svgSize}" height="${svgSize + 50}" viewBox="0 0 ${svgSize} ${svgSize + 50}" style="background:linear-gradient(135deg,#fafbfc 0%,#f5f7fa 100%);border-radius:8px;">`;
+            svg += `<text x="${svgSize/2}" y="15" text-anchor="middle" style="font-size:11px;font-weight:600;fill:#475569;">管板布管图 / Tube Sheet Layout</text>`;
+            svg += `<circle cx="${centerX}" cy="${centerY}" r="${layout.layoutRadius * scale}" fill="none" stroke="#3b82f6" stroke-width="2"/>`;
+            const displayCount = Math.min(tubes.requiredTubeHoles, layout.tubes.length);
+            for (let i = 0; i < displayCount; i++) {
+                const tube = layout.tubes[i];
+                const x = centerX + tube.x * scale, y = centerY + tube.y * scale;
+                svg += `<circle cx="${x}" cy="${y}" r="${tubeRadius}" fill="#f97316" stroke="#ea580c" stroke-width="1"/>`;
+            }
+            svg += `<circle cx="15" cy="${svgSize+5}" r="${tubeRadius}" fill="#f97316" stroke="#ea580c" stroke-width="1"/>`;
+            svg += `<text x="25" y="${svgSize+9}" style="font-size:10px;fill:#475569;">Tube Hole Ø${tubeDiameter}mm</text>`;
+            svg += '</svg>';
+            const info = `<div style="text-align:center;margin-top:8px;font-size:12px;color:#64748b;"><strong>三角形排列 / Triangular Pitch</strong> | 管间距 Pitch: ${tubePitch}mm (2D) | 管孔数 Holes: <strong>${tubes.requiredTubeHoles}</strong> (${tubes.count} U-Tubes×2) | 最大 Max: <strong>${layout.tubes.length}</strong></div>`;
+            document.getElementById('tubeDiagram').innerHTML = svg + info;
+        }
+
+        // ==================== 计算书生成函数 ====================
+        function generateCalcReport() {
+            if (!currentResult) {
+                alert('请先进行设计计算 / Please calculate first');
+                return;
+            }
+            
+            const standard = currentResult.input.standard;
+            let reportHtml = '';
+            
+            if (standard === 'GB150') {
+                reportHtml = generateGB150Report();
+            } else if (isAsmeStandard(standard)) {
+                reportHtml = generateASMEReport();
+            } else if (standard === 'PED') {
+                reportHtml = generatePEDReport();
+            }
+            
+            document.getElementById('reportModalTitle').textContent = getReportTitle(standard);
+            document.getElementById('reportModalBody').innerHTML = reportHtml;
+            document.getElementById('reportModal').classList.add('active');
+        }
+
+        function getReportTitle(standard) {
+            const titles = {
+                'GB150': '压力容器设计计算书 (GB150)',
+                'ASME': 'Pressure Vessel Design Calculation (ASME)',
+                'ASME+U': 'Pressure Vessel Design Calculation (ASME U Stamp)',
+                'ASME+U+NB': 'Pressure Vessel Design Calculation (ASME U+NB)',
+                'PED': 'Pressure Equipment Design Calculation (PED)'
+            };
+            return titles[standard] || '压力容器设计计算书';
+        }
+
+        function generateGB150Report() {
+            const r = currentResult;
+            const material = MATERIAL_DATABASE.GB150[r.input.materialType];
+            const shellMaterial = material.shell[0];
+            const headMaterial = material.head[0];
+            const nozzleMaterial = material.nozzle[0];
+            
+            const Di = r.vessel.vesselOdMm - 2 * r.vessel.wallThickness;
+            const P = r.input.pressure + 0.1;
+            const T = r.input.temperature;
+            const S = shellMaterial.yieldStrength * 0.6;
+            const E = 0.85;
+            const C2 = 2;
+            
+            const t_calc = (P * Di) / (2 * S * E - P) + C2;
+            
+            return `
+                <div class="calc-report">
+                    <div class="calc-report-title">压力容器设计计算书</div>
+                    <p style="text-align:center;margin-bottom:2rem;">依据标准：GB/T 150-2011《压力容器》</p>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">一、设计依据</div>
+                        <p>1. GB/T 150.1~150.4-2011《压力容器》</p>
+                        <p>2. GB/T 151-2014《热交换器》</p>
+                        <p>3. TSG 21-2016《固定式压力容器安全技术监察规程》</p>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">二、设计参数</div>
+                        <table class="calc-report-table">
+                            <tr><th>参数名称</th><th>符号</th><th>数值</th><th>单位</th></tr>
+                            <tr><td>设计压力</td><td>P</td><td>${r.input.pressure}</td><td>MPa(G)</td></tr>
+                            <tr><td>工作温度</td><td>T</td><td>${r.input.temperature}</td><td>℃</td></tr>
+                            <tr><td>容器直径</td><td>DN</td><td>${r.vessel.vesselInfo.dn}</td><td>mm</td></tr>
+                            <tr><td>容器外径</td><td>Do</td><td>${r.vessel.vesselOdMm}</td><td>mm</td></tr>
+                            <tr><td>容器长度</td><td>L</td><td>${r.vessel.length}</td><td>mm</td></tr>
+                            <tr><td>加热介质</td><td>-</td><td>${r.input.medium}</td><td>-</td></tr>
+                            <tr><td>安装方式</td><td>-</td><td>${r.input.installationType === 'horizontal' ? '卧式' : '立式'}</td><td>-</td></tr>
+                            <tr><td>焊缝系数</td><td>φ</td><td>${E}</td><td>-</td></tr>
+                            <tr><td>腐蚀裕量</td><td>C₂</td><td>${C2}</td><td>mm</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">三、筒体壁厚计算</div>
+                        <p><strong>计算公式 (GB 150.3 公式3-1)：</strong></p>
+                        <div class="calc-report-formula">
+                            δ = P·Dᵢ / (2·[σ]ᵗ·φ - P) + C₂
+                        </div>
+                        <p><strong>式中：</strong></p>
+                        <p>P = ${P.toFixed(2)} MPa (设计压力)</p>
+                        <p>Dᵢ = ${Di} mm (内径)</p>
+                        <p>[σ]ᵗ = ${S.toFixed(0)} MPa (设计温度下材料许用应力)</p>
+                        <p>φ = ${E} (焊缝系数)</p>
+                        <p>C₂ = ${C2} mm (腐蚀裕量)</p>
+                        <div class="calc-report-formula">
+                            δ = ${P.toFixed(2)} × ${Di} / (2 × ${S.toFixed(0)} × ${E} - ${P.toFixed(2)}) + ${C2} = ${t_calc.toFixed(2)} mm
+                        </div>
+                        <div class="calc-report-result">
+                            计算壁厚：δ = ${t_calc.toFixed(2)} mm，取名义壁厚：${r.vessel.wallThickness} mm
+                        </div>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">四、封头壁厚计算</div>
+                        <p>采用标准椭圆形封头 (EHA)，计算公式 (GB 150.3 公式5-1)：</p>
+                        <div class="calc-report-formula">
+                            δ = K·P·Dᵢ / (2·[σ]ᵗ·φ - 0.5·P) + C₂
+                        </div>
+                        <p>式中 K = 1.0 (标准椭圆封头形状系数)</p>
+                        <div class="calc-report-result">
+                            封头壁厚取与筒体相同：${r.vessel.wallThickness} mm
+                        </div>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">五、开孔补强计算</div>
+                        <p>根据GB 150.3，当满足以下条件时可免于补强计算：</p>
+                        <p>1. 设计压力 P ≤ 2.5 MPa</p>
+                        <p>2. 接管外径 d ≤ 89 mm</p>
+                        <p>当前设计压力 P = ${r.input.pressure} MPa，进口接管外径 d = ${actualInletNozzle.odMm} mm</p>
+                        <div class="calc-report-note">
+                            注：本设计接管尺寸较大，需按GB 150.3进行等面积补强计算，此处略。
+                        </div>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">六、加热管参数</div>
+                        <table class="calc-report-table">
+                            <tr><th>参数名称</th><th>数值</th><th>单位</th></tr>
+                            <tr><td>U形管数量</td><td>${r.tubes.count}</td><td>根</td></tr>
+                            <tr><td>单管功率</td><td>${r.tubes.powerPerTube}</td><td>kW</td></tr>
+                            <tr><td>加热管直径</td><td>${r.tubes.diameter}</td><td>mm</td></tr>
+                            <tr><td>管间距</td><td>${r.tubes.tubePitch}</td><td>mm</td></tr>
+                            <tr><td>U形管长度</td><td>${r.tubes.uTubeLength}</td><td>mm</td></tr>
+                            <tr><td>有效加热长度</td><td>${r.tubes.effectiveLength}</td><td>mm</td></tr>
+                            <tr><td>表面负荷</td><td>${r.tubes.surfaceLoad}</td><td>W/cm²</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">七、材料汇总表</div>
+                        <table class="calc-report-table">
+                            <tr><th>零部件名称</th><th>材料牌号</th><th>标准</th></tr>
+                            <tr><td>筒体</td><td>${shellMaterial.grade}</td><td>GB/T 713</td></tr>
+                            <tr><td>封头</td><td>${headMaterial.grade}</td><td>GB/T 713</td></tr>
+                            <tr><td>接管</td><td>${nozzleMaterial.grade}</td><td>GB/T 8163</td></tr>
+                            <tr><td>法兰</td><td>${material.flange[0].grade}</td><td>GB/T 9124</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">八、管口表</div>
+                        <table class="calc-report-table">
+                            <tr><th>符号</th><th>公称尺寸</th><th>外径</th><th>用途</th></tr>
+                            <tr><td>a</td><td>DN${actualInletNozzle.dn}</td><td>${actualInletNozzle.odMm}mm</td><td>介质进口</td></tr>
+                            <tr><td>b</td><td>DN${actualOutletNozzle.dn}</td><td>${actualOutletNozzle.odMm}mm</td><td>介质出口</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div style="margin-top:3rem;text-align:right;">
+                        <p>设计：________________ 日期：________</p>
+                        <p>校对：________________ 日期：________</p>
+                        <p>审核：________________ 日期：________</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateASMEReport() {
+            const r = currentResult;
+            const standard = r.input.standard;
+            const material = MATERIAL_DATABASE[standard][r.input.materialType];
+            const shellMaterial = material.shell[0];
+            
+            const Di = r.vessel.vesselOdMm - 2 * r.vessel.wallThickness;
+            const P = r.input.pressure + 0.1;
+            const S = shellMaterial.yieldStrength * 0.6;
+            const E = 0.85;
+            const CA = 2;
+            
+            const t_calc = (P * Di) / (2 * S * E - P) + CA;
+            
+            // 获取英文介质名称
+            const mediumName = MEDIUM_NAMES[r.input.medium] ? MEDIUM_NAMES[r.input.medium].en : r.input.medium;
+            
+            const standardLabel = standard === 'ASME' ? 'ASME BPVC Section VIII Div.1' : 
+                                  standard === 'ASME+U' ? 'ASME BPVC Section VIII Div.1 (U Stamp)' :
+                                  'ASME BPVC Section VIII Div.1 (U + NB Stamp)';
+            
+            return `
+                <div class="calc-report">
+                    <div class="calc-report-title">Pressure Vessel Design Calculation</div>
+                    <p style="text-align:center;margin-bottom:2rem;">Design Code: ${standardLabel}</p>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">1. Design Basis</div>
+                        <p>1. ASME Boiler and Pressure Vessel Code, Section VIII, Division 1</p>
+                        <p>2. TEMA Standards for Shell and Tube Heat Exchangers</p>
+                        ${standard.includes('U') ? '<p>3. ASME U Stamp Certification Requirements</p>' : ''}
+                        ${standard.includes('NB') ? '<p>4. National Board Registration Requirements</p>' : ''}
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">2. Design Parameters</div>
+                        <table class="calc-report-table">
+                            <tr><th>Parameter</th><th>Symbol</th><th>Value</th><th>Unit</th></tr>
+                            <tr><td>Design Pressure</td><td>P</td><td>${r.input.pressure}</td><td>barg</td></tr>
+                            <tr><td>Design Temperature</td><td>T</td><td>${r.input.temperature}</td><td>℃</td></tr>
+                            <tr><td>Vessel Size</td><td>NPS</td><td>${r.vessel.vesselInfo.nps}"</td><td>-</td></tr>
+                            <tr><td>Outside Diameter</td><td>Do</td><td>${r.vessel.vesselOdMm}</td><td>mm</td></tr>
+                            <tr><td>Vessel Length</td><td>L</td><td>${r.vessel.length}</td><td>mm</td></tr>
+                            <tr><td>Heating Medium</td><td>-</td><td>${mediumName}</td><td>-</td></tr>
+                            <tr><td>Installation</td><td>-</td><td>${r.input.installationType === 'horizontal' ? 'Horizontal' : 'Vertical'}</td><td>-</td></tr>
+                            <tr><td>Joint Efficiency</td><td>E</td><td>${E}</td><td>-</td></tr>
+                            <tr><td>Corrosion Allowance</td><td>CA</td><td>${CA}</td><td>mm</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">3. Shell Thickness Calculation (UG-27)</div>
+                        <p><strong>Formula (UG-27(c)(1)):</strong></p>
+                        <div class="calc-report-formula">
+                            t = P·R / (S·E - 0.6·P) + CA
+                        </div>
+                        <p><strong>Where:</strong></p>
+                        <p>P = ${P.toFixed(2)} MPa (Design Pressure)</p>
+                        <p>R = ${(Di/2).toFixed(1)} mm (Inside Radius)</p>
+                        <p>S = ${S.toFixed(0)} MPa (Allowable Stress at Design Temperature)</p>
+                        <p>E = ${E} (Joint Efficiency)</p>
+                        <p>CA = ${CA} mm (Corrosion Allowance)</p>
+                        <div class="calc-report-formula">
+                            t = ${P.toFixed(2)} × ${(Di/2).toFixed(1)} / (${S.toFixed(0)} × ${E} - 0.6 × ${P.toFixed(2)}) + ${CA} = ${t_calc.toFixed(2)} mm
+                        </div>
+                        <div class="calc-report-result">
+                            Calculated Thickness: t = ${t_calc.toFixed(2)} mm, Nominal Thickness: ${r.vessel.wallThickness} mm
+                        </div>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">4. Head Thickness Calculation</div>
+                        <p>Ellipsoidal Head (UG-32):</p>
+                        <div class="calc-report-formula">
+                            t = P·D / (2·S·E - 0.2·P) + CA
+                        </div>
+                        <div class="calc-report-result">
+                            Head Thickness: ${r.vessel.wallThickness} mm (Same as shell)
+                        </div>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">5. Nozzle Reinforcement (UG-37)</div>
+                        <p>Reinforcement requirements per UG-36 through UG-42:</p>
+                        <p>Inlet Nozzle: NPS ${actualInletNozzle.nps}" (${actualInletNozzle.odMm}mm OD)</p>
+                        <p>Outlet Nozzle: NPS ${actualOutletNozzle.nps}" (${actualOutletNozzle.odMm}mm OD)</p>
+                        <div class="calc-report-note">
+                            Note: Detailed reinforcement calculations shall be performed per UG-37.
+                        </div>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">6. Heating Element Parameters</div>
+                        <table class="calc-report-table">
+                            <tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>
+                            <tr><td>U-Tube Count</td><td>${r.tubes.count}</td><td>-</td></tr>
+                            <tr><td>Power per Element</td><td>${r.tubes.powerPerTube}</td><td>kW</td></tr>
+                            <tr><td>Element Diameter</td><td>${r.tubes.diameter}</td><td>mm</td></tr>
+                            <tr><td>Tube Pitch</td><td>${r.tubes.tubePitch}</td><td>mm</td></tr>
+                            <tr><td>U-Tube Length</td><td>${r.tubes.uTubeLength}</td><td>mm</td></tr>
+                            <tr><td>Effective Length</td><td>${r.tubes.effectiveLength}</td><td>mm</td></tr>
+                            <tr><td>Surface Load</td><td>${r.tubes.surfaceLoad}</td><td>W/cm²</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">7. Material Summary</div>
+                        <table class="calc-report-table">
+                            <tr><th>Component</th><th>Material</th><th>Specification</th></tr>
+                            <tr><td>Shell</td><td>${shellMaterial.grade}</td><td>ASME SA-516</td></tr>
+                            <tr><td>Head</td><td>${material.head[0].grade}</td><td>ASME SA-516</td></tr>
+                            <tr><td>Nozzle</td><td>${material.nozzle[0].grade}</td><td>ASME SA-106</td></tr>
+                            <tr><td>Flange</td><td>${material.flange[0].grade}</td><td>ASME SA-105</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">8. Nozzle Schedule</div>
+                        <table class="calc-report-table">
+                            <tr><th>Mark</th><th>NPS</th><th>OD</th><th>Service</th></tr>
+                            <tr><td>N1</td><td>${actualInletNozzle.nps}"</td><td>${actualInletNozzle.odMm}mm</td><td>Medium Inlet</td></tr>
+                            <tr><td>N2</td><td>${actualOutletNozzle.nps}"</td><td>${actualOutletNozzle.odMm}mm</td><td>Medium Outlet</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div style="margin-top:3rem;text-align:right;">
+                        <p>Designed by: ________________ Date: ________</p>
+                        <p>Checked by: ________________ Date: ________</p>
+                        <p>Approved by: ________________ Date: ________</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generatePEDReport() {
+            const r = currentResult;
+            const material = MATERIAL_DATABASE.PED[r.input.materialType];
+            const shellMaterial = material.shell[0];
+            
+            const Di = r.vessel.vesselOdMm - 2 * r.vessel.wallThickness;
+            const P = r.input.pressure + 0.1;
+            const S = shellMaterial.yieldStrength * 0.6;
+            const E = 0.85;
+            const CA = 2;
+            
+            const t_calc = (P * Di) / (2 * S * E - P) + CA;
+            
+            const PS = r.input.pressure;
+            const V = r.vessel.volume;
+            let category = 'I';
+            if (PS > 0.5 && V > 1) category = 'II';
+            if (PS > 10 && V > 1) category = 'III';
+            if (PS > 100) category = 'IV';
+            
+            // 获取双语介质名称
+            const mediumName = MEDIUM_NAMES[r.input.medium] ? MEDIUM_NAMES[r.input.medium].bilingual : r.input.medium;
+            
+            return `
+                <div class="calc-report">
+                    <div class="calc-report-title">PED Pressure Equipment Calculation</div>
+                    <p style="text-align:center;margin-bottom:2rem;">Directive 2014/68/EU (PED)</p>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">1. Design Basis / 设计依据</div>
+                        <p>1. Pressure Equipment Directive 2014/68/EU (PED)</p>
+                        <p>2. EN 13445 Unfired Pressure Vessels</p>
+                        <p>3. EN 13480 Metallic Industrial Piping</p>
+                        <div class="calc-report-result">
+                            Equipment Category: ${category}
+                        </div>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">2. Design Parameters / 设计参数</div>
+                        <table class="calc-report-table">
+                            <tr><th>Parameter / 参数</th><th>Symbol / 符号</th><th>Value / 数值</th><th>Unit / 单位</th></tr>
+                            <tr><td>Design Pressure / 设计压力</td><td>PS</td><td>${r.input.pressure}</td><td>barg</td></tr>
+                            <tr><td>Design Temperature / 设计温度</td><td>TS</td><td>${r.input.temperature}</td><td>℃</td></tr>
+                            <tr><td>Vessel Volume / 容器容积</td><td>V</td><td>${r.vessel.volume.toFixed(3)}</td><td>m³</td></tr>
+                            <tr><td>Outside Diameter / 外径</td><td>De</td><td>${r.vessel.vesselOdMm}</td><td>mm</td></tr>
+                            <tr><td>Vessel Length / 容器长度</td><td>L</td><td>${r.vessel.length}</td><td>mm</td></tr>
+                            <tr><td>Heating Medium / 加热介质</td><td>-</td><td>${mediumName}</td><td>-</td></tr>
+                            <tr><td>Joint Efficiency / 焊缝系数</td><td>z</td><td>${E}</td><td>-</td></tr>
+                            <tr><td>Corrosion Allowance / 腐蚀裕量</td><td>c</td><td>${CA}</td><td>mm</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">3. Shell Thickness Calculation (EN 13445-3) / 筒体壁厚计算</div>
+                        <p><strong>Formula / 公式:</strong></p>
+                        <div class="calc-report-formula">
+                            e = P·Di / (2·f·z - P) + c
+                        </div>
+                        <p><strong>Where / 式中:</strong></p>
+                        <p>P = ${P.toFixed(2)} MPa (Calculation Pressure / 计算压力)</p>
+                        <p>Di = ${Di} mm (Inside Diameter / 内径)</p>
+                        <p>f = ${S.toFixed(0)} MPa (Design Stress / 设计应力)</p>
+                        <p>z = ${E} (Joint Efficiency / 焊缝系数)</p>
+                        <p>c = ${CA} mm (Corrosion Allowance / 腐蚀裕量)</p>
+                        <div class="calc-report-formula">
+                            e = ${P.toFixed(2)} × ${Di} / (2 × ${S.toFixed(0)} × ${E} - ${P.toFixed(2)}) + ${CA} = ${t_calc.toFixed(2)} mm
+                        </div>
+                        <div class="calc-report-result">
+                            Calculated Thickness / 计算壁厚: e = ${t_calc.toFixed(2)} mm<br>
+                            Nominal Thickness / 名义壁厚: ${r.vessel.wallThickness} mm
+                        </div>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">4. Head Thickness / 封头壁厚</div>
+                        <p>Torospherical Head per EN 13445-3:</p>
+                        <div class="calc-report-result">
+                            Head Thickness / 封头壁厚: ${r.vessel.wallThickness} mm
+                        </div>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">5. Heating Element Parameters / 加热管参数</div>
+                        <table class="calc-report-table">
+                            <tr><th>Parameter / 参数</th><th>Value / 数值</th><th>Unit / 单位</th></tr>
+                            <tr><td>U-Tube Count / U形管数量</td><td>${r.tubes.count}</td><td>-</td></tr>
+                            <tr><td>Power per Element / 单管功率</td><td>${r.tubes.powerPerTube}</td><td>kW</td></tr>
+                            <tr><td>Element Diameter / 加热管直径</td><td>${r.tubes.diameter}</td><td>mm</td></tr>
+                            <tr><td>Tube Pitch / 管间距</td><td>${r.tubes.tubePitch}</td><td>mm</td></tr>
+                            <tr><td>Surface Load / 表面负荷</td><td>${r.tubes.surfaceLoad}</td><td>W/cm²</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">6. Material Summary / 材料汇总</div>
+                        <table class="calc-report-table">
+                            <tr><th>Component / 零部件</th><th>Material / 材料</th><th>Standard / 标准</th></tr>
+                            <tr><td>Shell / 筒体</td><td>${shellMaterial.grade}</td><td>EN 10028</td></tr>
+                            <tr><td>Head / 封头</td><td>${material.head[0].grade}</td><td>EN 10028</td></tr>
+                            <tr><td>Nozzle / 接管</td><td>${material.nozzle[0].grade}</td><td>EN 10216</td></tr>
+                            <tr><td>Flange / 法兰</td><td>${material.flange[0].grade}</td><td>EN 10222</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">7. Nozzle Schedule / 管口表</div>
+                        <table class="calc-report-table">
+                            <tr><th>Mark / 标记</th><th>DN</th><th>OD / 外径</th><th>Service / 用途</th></tr>
+                            <tr><td>N1</td><td>DN${actualInletNozzle.dn}</td><td>${actualInletNozzle.odMm}mm</td><td>Medium Inlet / 介质进口</td></tr>
+                            <tr><td>N2</td><td>DN${actualOutletNozzle.dn}</td><td>${actualOutletNozzle.odMm}mm</td><td>Medium Outlet / 介质出口</td></tr>
+                        </table>
+                    </div>
+                    
+                    <div class="calc-report-section">
+                        <div class="calc-report-section-title">8. Conformity Assessment / 合格评定</div>
+                        <p>Category / 类别: ${category}</p>
+                        <p>Module / 模块: ${category === 'I' ? 'Module A' : category === 'II' ? 'Module A2' : 'Module B + C2'}</p>
+                        <p>Notified Body / 公告机构: ________________</p>
+                    </div>
+                    
+                    <div style="margin-top:3rem;text-align:right;">
+                        <p>Designed by / 设计: ________________ Date / 日期: ________</p>
+                        <p>Checked by / 校对: ________________ Date / 日期: ________</p>
+                        <p>Approved by / 审核: ________________ Date / 日期: ________</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.remove('active');
+        }
+
+        function printReport() {
+            const printContent = document.getElementById('reportModalBody').innerHTML;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>压力容器设计计算书</title>
+                    <style>
+                        body { font-family: 'Times New Roman', Times, serif; padding: 20mm; }
+                        .calc-report-title { text-align: center; font-size: 18pt; font-weight: bold; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #000; }
+                        .calc-report-section { margin-bottom: 20px; }
+                        .calc-report-section-title { font-size: 12pt; font-weight: bold; margin-bottom: 10px; padding: 5px; background: #f0f0f0; border-left: 3px solid #3b82f6; }
+                        .calc-report-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                        .calc-report-table th, .calc-report-table td { border: 1px solid #333; padding: 5px 10px; text-align: left; font-size: 10pt; }
+                        .calc-report-table th { background: #f5f5f5; font-weight: bold; text-align: center; }
+                        .calc-report-formula { background: #f9f9f9; border: 1px solid #ddd; padding: 10px; margin: 10px 0; font-style: italic; }
+                        .calc-report-result { background: #e8f5e9; border: 1px solid #a5d6a7; padding: 10px; margin: 10px 0; font-weight: bold; }
+                        .calc-report-note { font-size: 9pt; color: #666; margin: 10px 0; padding-left: 15px; border-left: 2px solid #ccc; }
+                        @media print { body { padding: 0; } }
+                    </style>
+                </head>
+                <body>${printContent}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+    </script>
+</body>
+</html>
